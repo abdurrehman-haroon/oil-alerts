@@ -20,6 +20,7 @@ analysis.json:
 import datetime as dt
 import html
 import json
+import re
 import sys
 from zoneinfo import ZoneInfo
 
@@ -54,7 +55,7 @@ RED, GREEN, GREY, DIM = "#f6465d", "#0ecb81", "#848e9c", "#5e6673"
 def tag(text, bg, fg, bold=True):
     b = "font-weight:bold;" if bold else ""
     return (f'<span style="background:{bg};color:{fg};padding:2px 6px;border-radius:4px;display:inline-block;'
-            f'white-space:nowrap;margin:0 4px 4px 0;{b}">{E(text)}</span>')
+            f'white-space:nowrap;margin:0 0 4px 0;{b}">{E(text)}</span> ')
 
 
 def num(x):
@@ -189,7 +190,7 @@ def card(s):
     tags = ""
     if s.get("headline_only"):
         tags += ('<span style="background:transparent;color:#848e9c;border-radius:4px;display:inline-block;'
-                 'white-space:nowrap;border:1px dashed #3c434d;padding:1px 6px;margin:0 4px 4px 0;">Headline only</span>')
+                 'white-space:nowrap;border:1px dashed #3c434d;padding:1px 6px;margin:0 0 4px 0;">Headline only</span> ')
     _, sbg, sfg, _ = SENT[s["sentiment"]]
     _, ibg, ifg = IMPACT[s["impact"]]
     hbg, hfg = HORIZON[s["horizon"]]
@@ -208,7 +209,7 @@ def card(s):
           <div style="font:11px/22px Arial,sans-serif;margin-bottom:6px;">{tags}</div>
           <div style="font:bold 15px Arial,sans-serif;line-height:1.35;"><a href="{link}" target="_blank" style="color:#eaecef;text-decoration:underline;text-decoration-color:#3c434d;">{E(s["headline"])}</a></div>
           <div style="font:13px/1.65 Arial,sans-serif;margin-top:8px;color:#b7bdc6;">{E(s["summary"])}</div>
-          <div style="font:13px/1.5 Arial,sans-serif;margin-top:10px;padding-top:8px;border-top:1px solid #1e2329;color:#eaecef;"><b style="color:#eaecef;">Why it matters:</b> {E(s["why"])}</div>
+          <div style="padding-top:10px;"><div style="font:13px/1.5 Arial,sans-serif;padding-top:8px;border-top:1px solid #1e2329;color:#eaecef;"><b style="color:#eaecef;">Why it matters:</b> {E(s["why"])}</div></div>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;"><tr>
             <td style="font:12px Arial,sans-serif;"><a href="{link}" target="_blank" style="color:#4ea1ff;text-decoration:none;font-weight:bold;">Read on {src} &rarr;</a></td>
             <td align="right" style="font:11px Arial,sans-serif;"><span style="background:#1e2329;color:#b7bdc6;padding:2px 6px;border-radius:4px;display:inline-block;white-space:nowrap;font-weight:bold;">{n} source{"s" if n != 1 else ""}</span></td>
@@ -231,12 +232,7 @@ def news_section(stories):
         return head + '''  <tr><td style="padding:14px 20px 4px;font:13px Arial,sans-serif;color:#848e9c;">No new oil stories since the last email.</td></tr>
 '''
     cards = [card(s) for s in stories]
-    body = "".join(cards[:5])
-    if len(cards) > 5:
-        body += ('  <input type="checkbox" id="newsmore" class="news-toggle" style="display:none !important;mso-hide:all;">\n'
-                 '  <div class="news-more">\n' + "".join(cards[5:]) + '  </div>\n'
-                 '  <label for="newsmore" class="btn-more" style="display:none;cursor:pointer;margin:6px 0 12px;padding:10px 0;text-align:center;border:1px solid #2b3139;border-radius:6px;background:#161a1e;font:bold 12px Arial,sans-serif;color:#4ea1ff;letter-spacing:1px;">SHOW MORE &#9662;</label>\n'
-                 '  <label for="newsmore" class="btn-less" style="display:none;cursor:pointer;margin:6px 0 12px;padding:10px 0;text-align:center;border:1px solid #2b3139;border-radius:6px;background:#161a1e;font:bold 12px Arial,sans-serif;color:#4ea1ff;letter-spacing:1px;">SHOW LESS &#9652;</label>\n')
+    body = "".join(cards)  # every card shown on every client (no CSS toggle)
     return head + '  <tr><td style="padding:0 20px;">\n' + body + '  </td></tr>\n'
 
 
@@ -455,16 +451,13 @@ HEAD = '''<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <meta name="color-scheme" content="dark">
 <meta name="supported-color-schemes" content="dark">
 <title>Oil Hourly Brief</title>
-<style>
-  #newsmore:not(:checked) ~ .news-more { display:none; }
-  #newsmore:not(:checked) ~ .btn-more { display:block !important; }
-  #newsmore:checked ~ .btn-less { display:block !important; }
-</style>
 </head>
-<body style="margin:0;padding:0;background:#05070a;font-family:Arial,Helvetica,sans-serif;color:#eaecef;" bgcolor="#05070a">
+<body style="margin:0;padding:0;background:#05070a;font-family:Arial,Helvetica,sans-serif;color:#eaecef;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;" bgcolor="#05070a">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#05070a" style="background:#05070a;">
 <tr><td align="center" style="padding:16px 8px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0b0e11" style="max-width:640px;background:#0b0e11;border:1px solid #1e2329;border-radius:8px;overflow:hidden;">
@@ -495,6 +488,44 @@ def validate(stories):
                 raise SystemExit(f"story {i}: missing {field}")
 
 
+FONT_RE = re.compile(r"font:\s*(bold\s+)?(\d+px)(?:/([\d.]+(?:px)?))?\s+([^;\"]+)")
+DIV_MARGIN_RE = re.compile(r'<div style="([^"]*)"')
+
+
+def _font(m):
+    out = []
+    if m.group(1):
+        out.append("font-weight:bold")
+    out.append(f"font-size:{m.group(2)}")
+    if m.group(3):
+        out.append(f"line-height:{m.group(3)}")
+    out.append(f"font-family:{m.group(4).strip()}")
+    return ";".join(out)
+
+
+def _div(m):
+    st = m.group(1)
+    if "border" in st or "background" in st:
+        return m.group(0)  # margin and padding differ visually here; leave as is
+    def conv(mm):
+        side, value = mm.group(1), mm.group(2).strip()
+        if side:  # margin-top / margin-bottom → same padding (no border or background, so it looks identical)
+            return f"padding-{side}:{value}"
+        v = value.split()  # margin shorthand: keep only the vertical spacing
+        top = v[0]
+        bottom = v[2] if len(v) >= 3 else v[0]
+        return f"padding-top:{top};padding-bottom:{bottom}"
+    return '<div style="' + re.sub(r"margin(?:-(top|bottom))?:([^;]+)", conv, st) + '"'
+
+
+def email_safe(html_text):
+    """Make every client render the same: longhand fonts (Outlook ignores the shorthand), div
+    spacing as padding (Outlook ignores div margins), and no whitespace between tags."""
+    html_text = FONT_RE.sub(_font, html_text)
+    html_text = DIV_MARGIN_RE.sub(_div, html_text)
+    return re.sub(r">\s*\n\s*<", "><", html_text)  # keep single spaces (they separate tags in Outlook)
+
+
 def main():
     data = json.load(open(sys.argv[1]))
     analysis = json.load(open(sys.argv[2]))
@@ -502,8 +533,8 @@ def main():
     stories = analysis.get("stories", [])
     validate(stories)
     stories.sort(key=lambda s: -IMPACT[s["impact"]][0])  # stable: keeps Claude's newest-first order within a level
-    sys.stdout.write(HEAD + header(now) + prices_section(data, now) + news_section(stories)
-                     + sentiment_section(stories) + next24_section(data, analysis, now) + FOOT)
+    sys.stdout.write(email_safe(HEAD + header(now) + prices_section(data, now) + news_section(stories)
+                     + sentiment_section(stories) + next24_section(data, analysis, now) + FOOT))
 
 
 if __name__ == "__main__":
