@@ -9,7 +9,7 @@ repository's root. Never change `render_email.py`'s design or `email-template-da
 python3 fetch_data.py > /tmp/data.json
 ```
 
-This collects CL/Brent prices (CNBC + Binance), Binance funding, the news published since the previous scheduled
+This collects CL/Brent prices (Hyperliquid + Binance), Binance funding, the news published since the previous scheduled
 run (full article text where available) and calendar events for the next 24 hours. Read `/tmp/data.json`.
 Anything that failed is listed under `errors`; carry on with what you have and never invent a value.
 
@@ -67,15 +67,21 @@ If it exits with a validation error, fix `/tmp/analysis.json` and run it again.
 
 ## 4. Send
 
-Send ONE email with the Gmail connector's send tool:
-- to: the recipient addresses listed in the routine's prompt (all of them in To). They are kept out of this repository on purpose.
-- subject: `Oil Hourly Brief · CL <binance or CNBC CL price> · <time PKT from data.json generated_pkt>`,
-  e.g. `Oil Hourly Brief · CL 90.08 · 7:12 PM PKT`
-- htmlBody: the full, unmodified contents of `/tmp/email.html`
-- body (plain-text fallback): one line with CL and Brent prices, then each story headline on its own line
+Write the plain-text fallback to `/tmp/email.txt`: one line with CL and Brent prices, then each story headline on its
+own line. Then send the rendered file with the script. Do NOT open, read, retype or edit `/tmp/email.html`:
 
-Send exactly one email per run, even if a step failed, so the recipients know the routine is alive. If rendering
-failed completely, send a plain-text email with the prices and headlines you have.
+```bash
+python3 send_email.py /tmp/email.html "Oil Hourly Brief · CL <Binance CL price> · <time PKT from data.json generated_pkt>" /tmp/email.txt
+```
+
+e.g. subject `Oil Hourly Brief · CL 90.08 · 7:12 PM PKT`. The script reads the sender, credentials and recipients from
+environment variables. They are kept out of this repository on purpose.
+
+Only if the script exits with an error: send the email with the Gmail connector's send tool instead, to the recipient
+addresses listed in the routine's prompt (all in To), with `/tmp/email.txt` as the plain-text body and NO htmlBody, and
+mention the script's error in the final report.
+
+Send exactly one email per run, even if a step failed, so the recipients know the routine is alive.
 
 ## 5. Finish
 

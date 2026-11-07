@@ -286,8 +286,8 @@ def bar_row(name, color, stories, last):
 
 
 def dot(color):
-    return (f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{color};'
-            f'border:2px solid {color};vertical-align:middle;margin:0 2px;"></span>')
+    return (f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background-color:{color};'
+            f'border:2px solid {color};vertical-align:middle;margin:1px;"></span>')
 
 
 def sentiment_section(stories):
@@ -295,20 +295,23 @@ def sentiment_section(stories):
     bars = bar_row("Overall", "#eaecef", stories, False)
     for i, (h, (_, hc)) in enumerate(HORIZON.items()):
         bars += bar_row(h, hc, by_h[h], i == 2)
+    # Mobile-safe grid: wrapped two-line labels, fixed column widths, gaps from cellspacing (no borders,
+    # which dark-mode mail apps recolour to white).
     head_cells = "".join(
-        f'<td width="16%" align="center" valign="bottom" style="padding:4px 2px 6px;font:bold 11px Arial,sans-serif;color:{SENT[l][2]};line-height:1.25;">'
-        f'{l}<br><b style="font-family:\'Courier New\',monospace;color:#eaecef;">{sum(s["sentiment"] == l for s in stories)}</b></td>'
+        f'<td width="16%" align="center" valign="bottom" style="padding:0 1px 6px;font:bold 10px Arial,sans-serif;color:{SENT[l][2]};line-height:1.2;">'
+        f'{l.replace("Slightly ", "Slightly<br>")}<br><b style="font-family:\'Courier New\',monospace;color:#eaecef;">{sum(s["sentiment"] == l for s in stories)}</b></td>'
         for l in SENT_ORDER)
     grid = f'<tr><td width="20%"></td>{head_cells}</tr>'
     for h, (_, hc) in HORIZON.items():
-        row = (f'<tr><td style="padding:4px 8px 4px 0;font:bold 12px Arial,sans-serif;color:{hc};white-space:nowrap;">'
-               f'{h} <b style="font-family:\'Courier New\',monospace;color:#eaecef;">{len(by_h[h])}</b></td>')
+        row = (f'<tr><td width="20%" style="padding:0 4px 0 0;font:bold 11px Arial,sans-serif;color:{hc};line-height:1.2;">'
+               f'{h.replace("-term", "")}<br><span style="font-weight:normal;color:#848e9c;">term · </span>'
+               f'<b style="font-family:\'Courier New\',monospace;color:#eaecef;">{len(by_h[h])}</b></td>')
         for l in SENT_ORDER:
             cell = sorted((s for s in by_h[h] if s["sentiment"] == l), key=lambda s: -IMPACT[s["impact"]][0])
             bg = SENT[l][3] if cell else "#12161a"
             content = "".join(dot(IMPACT[s["impact"]][2]) for s in cell) or "&nbsp;"
-            row += (f'<td align="center" bgcolor="{bg}" style="background:{bg};border:2px solid #0b0e11;'
-                    f'padding:10px 2px;line-height:0;">{content}</td>')
+            row += (f'<td width="16%" align="center" height="34" bgcolor="{bg}" style="background-color:{bg};'
+                    f'padding:6px 1px;line-height:14px;">{content}</td>')
         grid += row + "</tr>"
     key = (f'Impact: {dot("#ff7a1a")} <span style="color:#ff7a1a;font-weight:bold;">High</span> &nbsp; '
            f'{dot("#ffd60a")} <span style="color:#ffd60a;font-weight:bold;">Medium</span> &nbsp; '
@@ -327,7 +330,7 @@ def sentiment_section(stories):
     </table>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">{bars}</table><div style="font:11px Arial,sans-serif;color:#5e6673;margin-top:8px;">The number on each bar shows how bearish or bullish the news is overall, from −2 (very bearish) to +2 (very bullish). Bigger stories count more: High-impact news counts 3 times, Medium twice and Low once.</div>
 <div style="font:bold 10px Arial,sans-serif;color:#5e6673;letter-spacing:1.5px;margin:18px 0 8px;">BREAKDOWN</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;">{grid}</table><div style="font:11px Arial,sans-serif;color:#848e9c;margin-top:10px;">{key}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="3" style="border-collapse:separate;table-layout:fixed;">{grid}</table><div style="font:11px Arial,sans-serif;color:#848e9c;margin-top:10px;">{key}</div>
   </td></tr>
 '''
 
@@ -519,6 +522,7 @@ def _div(m):
 
 
 def email_safe(html_text):
+    html_text = re.sub(r"([;\"])background:(#[0-9a-fA-F]{3,6}|transparent)", r"\1background-color:\2", html_text)
     """Make every client render the same: longhand fonts (Outlook ignores the shorthand), div
     spacing as padding (Outlook ignores div margins), and no whitespace between tags."""
     html_text = FONT_RE.sub(_font, html_text)
