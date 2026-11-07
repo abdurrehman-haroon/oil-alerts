@@ -129,13 +129,18 @@ def price_row(label, key, prices, size, last, now):
 '''
 
 
-def funding_row(label, rate, last):
+def funding_row(label, rate, last, futures_open=True):
     border = "" if last else "border-bottom:1px solid #1e2329;"
     r = num(rate)
-    if r is None or r == 0:
-        who = '<span style="color:#5e6673;">No funding (market closed)</span>' if r == 0 else \
-              '<span style="color:#5e6673;">unavailable</span>'
+    if r is None:
+        who = '<span style="color:#5e6673;">unavailable</span>'
         val = ""
+    elif r == 0:
+        # Binance keeps trading 24/7 but holds funding at 0 while NYMEX/ICE are closed.
+        why = "" if futures_open else ' <span style="color:#5e6673;">· paused while NYMEX/ICE closed</span>'
+        who = f'<span style="color:#848e9c;">Nobody pays</span>{why}'
+        val = (f'<span style="font:bold 13px \'Courier New\',monospace;color:#848e9c;">0.000%</span> '
+               f'<span style="font:10px Arial,sans-serif;color:#5e6673;">per 4h</span>')
     else:
         payer, payee = (("Shorts", RED), ("Longs", GREEN)) if r < 0 else (("Longs", GREEN), ("Shorts", RED))
         who = (f'<b style="color:{payer[1]};">{payer[0]}</b> <span style="color:#5e6673;">pay</span> '
@@ -152,6 +157,7 @@ def funding_row(label, rate, last):
 
 def prices_section(data, now):
     p = data.get("prices", {})
+    fut_open = p.get("CL", {}).get("exchange", {}).get("market_open", True)
     return f'''
   <!-- PRICES -->
   <tr><td style="padding:20px 20px 6px;">
@@ -166,7 +172,7 @@ def prices_section(data, now):
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#161a1e" style="background:#161a1e;border-radius:6px;margin-top:10px;">
       <tr><td colspan="3" style="padding:8px 12px 2px;font:bold 10px Arial,sans-serif;color:#5e6673;letter-spacing:1px;">BINANCE FUNDING</td></tr>
-{funding_row("CL", p.get("CL", {}).get("binance", {}).get("funding_rate"), False)}{funding_row("Brent", p.get("BRENT", {}).get("binance", {}).get("funding_rate"), True)}    </table>
+{funding_row("CL", p.get("CL", {}).get("binance", {}).get("funding_rate"), False, fut_open)}{funding_row("Brent", p.get("BRENT", {}).get("binance", {}).get("funding_rate"), True, fut_open)}    </table>
   </td></tr>
 '''
 
