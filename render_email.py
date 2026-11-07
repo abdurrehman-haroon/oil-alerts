@@ -53,8 +53,8 @@ RED, GREEN, GREY, DIM = "#f6465d", "#0ecb81", "#848e9c", "#5e6673"
 
 def tag(text, bg, fg, bold=True):
     b = "font-weight:bold;" if bold else ""
-    return (f'<div style="margin-bottom:6px;"><span style="background:{bg};color:{fg};padding:2px 6px;'
-            f'border-radius:4px;display:inline-block;white-space:nowrap;{b}">{E(text)}</span></div>')
+    return (f'<span style="background:{bg};color:{fg};padding:2px 6px;border-radius:4px;display:inline-block;'
+            f'white-space:nowrap;margin:0 4px 4px 0;{b}">{E(text)}</span>')
 
 
 def num(x):
@@ -188,27 +188,24 @@ def section_title(title, right):
 def card(s):
     tags = ""
     if s.get("headline_only"):
-        tags += ('<div style="margin-bottom:6px;"><span style="background:transparent;color:#848e9c;padding:2px 6px;'
-                 'border-radius:4px;display:inline-block;white-space:nowrap;border:1px dashed #3c434d;padding:1px 6px;">'
-                 'Headline only</span></div>')
+        tags += ('<span style="background:transparent;color:#848e9c;border-radius:4px;display:inline-block;'
+                 'white-space:nowrap;border:1px dashed #3c434d;padding:1px 6px;margin:0 4px 4px 0;">Headline only</span>')
     _, sbg, sfg, _ = SENT[s["sentiment"]]
     _, ibg, ifg = IMPACT[s["impact"]]
     hbg, hfg = HORIZON[s["horizon"]]
-    tags += "\n          " + tag(s["sentiment"], sbg, sfg)
-    tags += "\n          " + tag(s["impact"], ibg, ifg)
-    tags += "\n          " + tag(s["horizon"], hbg, hfg, bold=False)
+    tags += tag(s["sentiment"], sbg, sfg)
+    tags += tag(s["impact"], ibg, ifg)
+    tags += tag(s["horizon"], hbg, hfg, bold=False)
     if s.get("region"):
-        tags += "\n          " + tag(s["region"], "#1e2329", "#b7bdc6", bold=False)
+        tags += tag(s["region"], "#1e2329", "#b7bdc6", bold=False)
     n = int(s.get("sources_count") or 1)
     link = E(s["link"], quote=True)
     src = E(SOURCE_NAMES.get(s["source"], s["source"]))
     return f'''    <div style="padding:10px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#161a1e" style="background:#161a1e;border:1px solid #1e2329;border-radius:6px;">
       <tr>
-        <td width="112" valign="top" style="width:112px;padding:12px 10px 6px 12px;border-right:1px solid #1e2329;font:11px Arial,sans-serif;">
-          {tags}
-        </td>
         <td valign="top" style="padding:12px 14px;">
+          <div style="font:11px/22px Arial,sans-serif;margin-bottom:6px;">{tags}</div>
           <div style="font:bold 15px Arial,sans-serif;line-height:1.35;"><a href="{link}" target="_blank" style="color:#eaecef;text-decoration:underline;text-decoration-color:#3c434d;">{E(s["headline"])}</a></div>
           <div style="font:13px/1.65 Arial,sans-serif;margin-top:8px;color:#b7bdc6;">{E(s["summary"])}</div>
           <div style="font:13px/1.5 Arial,sans-serif;margin-top:10px;padding-top:8px;border-top:1px solid #1e2329;color:#eaecef;"><b style="color:#eaecef;">Why it matters:</b> {E(s["why"])}</div>

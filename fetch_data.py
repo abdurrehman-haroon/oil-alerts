@@ -43,6 +43,9 @@ FEEDS = [
     ("FXEmpire", "https://www.fxempire.com/api/v1/en/articles/rss/news", "headline", True),
 ]
 
+# Feeds that block the cloud server (HTTP 403) → domain to search on Google News instead.
+SITE_FALLBACK = {"CNBC Energy": "cnbc.com", "FXStreet": "fxstreet.com"}
+
 OIL_RE = re.compile(
     r"\b(crude|oil|wti|brent|opec|petroleum|barrels?|bpd|refiner(y|ies)|tankers?|"
     r"gasoline|diesel|distillates?|eia|rig count|shale|lng|natural gas)\b", re.I)
@@ -166,11 +169,23 @@ def news(since, max_articles):
     errors, items = [], []
     with ThreadPoolExecutor(8) as pool:
         futures = {pool.submit(read_feed, f, since): f[0] for f in FEEDS}
+        failed = []
         for fut, name in futures.items():
             try:
                 items.extend(fut.result())
             except Exception as e:  # noqa: BLE001
-                errors.append(f"{name} feed: {e}")
+                failed.append(name)
+                errors.append(f"{name} feed: {e} (used Google News headlines instead)"
+                              if name in SITE_FALLBACK else f"{name} feed: {e}")
+        # Sites that block the cloud server: fetch their oil headlines through Google News instead.
+        fallbacks = [(name, "https://news.google.com/rss/search?q=site:" + SITE_FALLBACK[name]
+                      + "+(crude+OR+oil+OR+OPEC+OR+Brent+OR+WTI)+when:1d&hl=en-US&gl=US&ceid=US:en", "headline", False)
+                     for name in failed if name in SITE_FALLBACK]
+        for fut, name in [(pool.submit(read_feed, f, since), f[0]) for f in fallbacks]:
+            try:
+                items.extend(fut.result())
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{name} Google News fallback: {e}")
     items.sort(key=lambda x: x["published_utc"] or "", reverse=True)
 
     full = [i for i in items if i["access"] == "full"][:max_articles]
