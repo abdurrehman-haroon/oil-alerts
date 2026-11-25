@@ -33,7 +33,7 @@ FEEDS = [
     ("FXStreet", "https://www.fxstreet.com/rss/news", "full", True),
     ("Offshore-Energy", "https://www.offshore-energy.biz/feed", "full", True),
     ("gCaptain", "https://gcaptain.com/feed/", "full", True),
-    ("NGI", "https://www.naturalgasintel.com/feed/", "full", True),
+    ("NGI", "https://www.naturalgasintel.com/feed/", "headline", True),  # article pages are paywall teasers
     ("World Oil", "https://www.worldoil.com/rss?feed=news", "full", False),
     ("Google News", "https://news.google.com/rss/search?q=%22crude+oil%22+OR+WTI+OR+Brent+OR+OPEC+when:1d&hl=en-US&gl=US&ceid=US:en", "headline", False),
     ("Investing.com", "https://www.investing.com/rss/news_11.rss", "headline", True),
@@ -138,10 +138,17 @@ def prices():
 
 
 # ---------------------------------------------------------------- news
+# Paragraphs that are not article text: author bios, site navigation, subscription teasers.
+BIO_RE = re.compile(r"^(?:[A-Z][\w.'-]+ ){1,3}[A-Z][\w.'-]+ (?:is|was) an? (?:[\w-]+ ){0,6}"
+                    r"(?:journalist|engineer|writer|analyst|reporter|editor|contributor|correspondent|economist|author)")
+JUNK_RE = re.compile(r"Advertise Forum Jobs Subscribe|Grab a Seat at the Captain|Transparent daily view of US supply|"
+                     r"Sign up for|Subscribe to our|newsletter|All rights reserved|Click here to|cookie", re.I)
+
+
 def article_text(url):
     page = get(url, timeout=25)
     paras = [clean(p) for p in re.findall(r"(?is)<p[^>]*>(.*?)</p>", page)]
-    paras = [p for p in paras if len(p) > 80]
+    paras = [p for p in paras if len(p) > 80 and not BIO_RE.match(p) and not JUNK_RE.search(p)]
     return " ".join(paras)
 
 
@@ -166,13 +173,14 @@ def read_feed(feed, since):
 
 
 def news(since, max_articles):
-    errors, items = [], []
+    errors, items, ok = [], [], []
     with ThreadPoolExecutor(8) as pool:
         futures = {pool.submit(read_feed, f, since): f[0] for f in FEEDS}
         failed = []
         for fut, name in futures.items():
             try:
                 items.extend(fut.result())
+                ok.append(name)
             except Exception as e:  # noqa: BLE001
                 failed.append(name)
                 errors.append(f"{name} feed: {e} (used Google News headlines instead)"
@@ -203,7 +211,20 @@ def news(since, max_articles):
 
     with ThreadPoolExecutor(8) as pool:
         list(pool.map(fill, full))
-    return items, errors
+    return items, errors, ok
+
+
+def norm(title):
+    """Comparable form of a headline: lower-case words, no outlet suffix like ' - Reuters'."""
+    return " ".join(re.findall(r"[a-z0-9]+", re.sub(r"\s+-\s+[^-]+$", "", title or "").lower()))
+
+
+def mark_already_sent(items, sent):
+    links = {s["link"] for s in sent}
+    titles = {norm(s["headline"]) for s in sent}
+    for i in items:
+        if i["link"] in links or norm(i["title"]) in titles:
+            i["already_sent"] = True
 
 
 # ---------------------------------------------------------------- funding history + calendar
@@ -259,13 +280,20 @@ def main():
         since = now - dt.timedelta(hours=4 if weekend else 1, minutes=5)
 
     p, e1 = prices()
-    n, e2 = news(since, a.max_articles)
+    n, e2, sources_ok = news(since, a.max_articles)
+    import state  # same folder; reads the claude/oil-state branch, never fails
+    sent = state.load()
+    mark_already_sent(n, sent)
     f, e3 = funding_history()
     c, e4 = calendar(now)
     json.dump({"generated_utc": now.isoformat(),
                "generated_pkt": now.astimezone(PKT).strftime("%a, %d %b %Y · %I:%M %p PKT"),
                "news_since_utc": since.isoformat(), "prices": p, "funding_history": f,
-               "news": n, "calendar_next_24h": c, "errors": e1 + e2 + e3 + e4},
+               "news": n, "calendar_next_24h": c, "errors": e1 + e2 + e3 + e4,
+               "recently_sent": [{"headline": x["headline"], "sent_utc": x["sent_utc"]} for x in sent
+                                 if dt.datetime.fromisoformat(x["sent_utc"]) >= now - dt.timedelta(hours=24)],
+               "sources_ok": [name for name, key in (("Hyperliquid", "exchange"), ("Binance", "binance"))
+                              if any(key in v for v in p.values())] + sources_ok + (["ForexFactory"] if not e4 else [])},
               sys.stdout, ensure_ascii=False, indent=1)
 
 

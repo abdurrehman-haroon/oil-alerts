@@ -355,22 +355,71 @@ def short_label(title):
     return title.split()[0][:6]
 
 
+def _easter(year):
+    a, b, c = year % 19, year // 100, year % 100
+    d, e = b // 4, b % 4
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    return dt.date(year, month, (h + l - 7 * m + 114) % 31 + 1)
+
+
+def us_market_holidays(year):
+    """NYMEX/US market holidays (observed dates)."""
+    def nth(month, weekday, n):  # n-th weekday of month; n=-1 for last
+        if n > 0:
+            d = dt.date(year, month, 1)
+            return d + dt.timedelta(days=(weekday - d.weekday()) % 7 + 7 * (n - 1))
+        d = dt.date(year, month + 1, 1) - dt.timedelta(days=1) if month < 12 else dt.date(year, 12, 31)
+        return d - dt.timedelta(days=(d.weekday() - weekday) % 7)
+
+    def observed(d):
+        return d - dt.timedelta(days=1) if d.weekday() == 5 else d + dt.timedelta(days=1) if d.weekday() == 6 else d
+    return {observed(dt.date(year, 1, 1)), nth(1, 0, 3), nth(2, 0, 3), _easter(year) - dt.timedelta(days=2),
+            nth(5, 0, -1), observed(dt.date(year, 6, 19)), observed(dt.date(year, 7, 4)), nth(9, 0, 1),
+            nth(11, 3, 4), observed(dt.date(year, 12, 25))}
+
+
 def fixed_events(now):
-    """Weekly oil releases, defined in US Eastern time (handles daylight saving)."""
-    spec = [(1, 16, 30, "API weekly crude inventory report"),            # Tue 4:30 PM ET
-            (2, 10, 30, "EIA weekly crude inventories"),                  # Wed 10:30 AM ET
-            (3, 10, 30, "EIA natural gas storage"),                       # Thu 10:30 AM ET
-            (4, 13, 0, "Baker Hughes rig count"),                         # Fri 1:00 PM ET
-            (4, 15, 30, "CFTC Commitments of Traders report")]            # Fri 3:30 PM ET
+    """Weekly oil releases not always in the ForexFactory feed, in US Eastern time (handles daylight saving).
+
+    EIA releases are left to ForexFactory for the current week (it carries holiday changes); they are only
+    filled in here for dates beyond that week. In a week with a market holiday on or before the release day,
+    the release moves one day later; Baker Hughes moves to Wednesday in Thanksgiving week; CFTC is skipped in
+    holiday weeks (it moves to the next Monday)."""
+    spec = [(1, 16, 30, "API weekly crude inventory report", "API"),        # Tue 4:30 PM ET
+            (2, 10, 30, "EIA weekly crude inventories", "EIA"),             # Wed 10:30 AM ET
+            (3, 10, 30, "EIA natural gas storage", "EIA"),                  # Thu 10:30 AM ET
+            (4, 13, 0, "Baker Hughes rig count", "BH"),                     # Fri 1:00 PM ET
+            (4, 15, 30, "CFTC Commitments of Traders report", "CFTC")]      # Fri 3:30 PM ET
     out = []
     today_et = now.astimezone(ET).date()
-    for d in range(0, 3):
-        day = today_et + dt.timedelta(days=d)
-        for wd, hh, mm, title in spec:
-            if day.weekday() == wd:
-                t = dt.datetime(day.year, day.month, day.day, hh, mm, tzinfo=ET).astimezone(UTC)
-                if now <= t <= now + dt.timedelta(hours=24):
-                    out.append({"time_utc": t.isoformat(), "title": title})
+    ff_week_end = today_et + dt.timedelta(days=(5 - today_et.weekday()) % 7)  # ForexFactory week runs Sun-Sat
+    for d in range(-1, 9):
+        week_start = today_et - dt.timedelta(days=today_et.weekday()) + dt.timedelta(weeks=d // 7)
+        if d % 7:
+            continue
+        holidays = us_market_holidays(week_start.year) | us_market_holidays(week_start.year + 1)
+        week_holidays = [week_start + dt.timedelta(days=i) for i in range(5)
+                         if week_start + dt.timedelta(days=i) in holidays]
+        for wd, hh, mm, title, kind in spec:
+            day = week_start + dt.timedelta(days=wd)
+            if kind == "EIA" and day <= ff_week_end:
+                continue
+            if kind == "CFTC" and week_holidays:
+                continue
+            if kind == "BH" and any(h.month == 11 and h.weekday() == 3 for h in week_holidays):
+                day = week_start + dt.timedelta(days=2)  # Thanksgiving week: Wednesday
+            elif kind in ("API", "EIA") and any(h <= day for h in week_holidays):
+                day += dt.timedelta(days=1)
+            if day in holidays:
+                continue
+            t = dt.datetime(day.year, day.month, day.day, hh, mm, tzinfo=ET).astimezone(UTC)
+            if now <= t <= now + dt.timedelta(hours=24):
+                out.append({"time_utc": t.isoformat(), "title": title})
     return out
 
 
@@ -472,10 +521,10 @@ HEAD = '''<!DOCTYPE html>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0b0e11" style="max-width:640px;background:#0b0e11;border:1px solid #1e2329;border-radius:8px;overflow:hidden;">
 
 '''
-FOOT = '''
+FOOT_TEMPLATE = '''
   <!-- FOOTER -->
   <tr><td bgcolor="#07090c" style="background:#07090c;padding:14px 20px;border-top:1px solid #1e2329;font:11px/1.5 Arial,sans-serif;color:#5e6673;">
-    Sources checked: CNBC, OilPrice, Rigzone, EIA, CNBC Energy, Guardian, BBC, FXStreet, Offshore-Energy, gCaptain, NGI, World Oil, Google News, Investing.com, MarketWatch, FT, Nasdaq, FXEmpire.<br>
+    Sources: {sources}.<br>
     Sentiment, impact and horizon are AI assessments, not financial advice. Generated automatically by a Claude routine.
   </td></tr>
 
@@ -544,7 +593,8 @@ def main():
     validate(stories)
     stories.sort(key=lambda s: -IMPACT[s["impact"]][0])  # stable: keeps Claude's newest-first order within a level
     sys.stdout.write(email_safe(HEAD + header(now) + prices_section(data, now) + news_section(stories)
-                     + sentiment_section(stories) + next24_section(data, analysis, now) + FOOT))
+                     + sentiment_section(stories) + next24_section(data, analysis, now)
+                     + FOOT_TEMPLATE.replace("{sources}", E(", ".join(data.get("sources_ok") or ["see routine log"])))))
 
 
 if __name__ == "__main__":

@@ -19,6 +19,11 @@ From `news`, keep only items that are real news or analysis relevant to the crud
 Brent). Drop promos, product pages, newsletters, pure natural-gas or unrelated stories, and anything whose text is
 site navigation rather than an article.
 
+Don't repeat earlier emails. Skip every item marked `"already_sent": true`, and skip any item that covers the same
+event as a headline in `recently_sent` (stories emailed in the last 24 hours), even from a different outlet. The
+only exception is a genuinely new development on that event (a new number, decision or price move); then write it
+as an update, e.g. headline "UPDATE: …", and say what changed.
+
 Group items that cover the same event into one story. For each story pick the best source: one with `"access": "full"`
 if any, otherwise the earliest. Cap the email at 15 stories, keeping the most important.
 
@@ -83,6 +88,17 @@ mention the script's error in the final report.
 
 Send exactly one email per run, even if a step failed, so the recipients know the routine is alive.
 
-## 5. Finish
+## 5. Remember what was sent
 
-End with a two-line report: how many stories were sent and any `errors` from the fetch.
+After a successful send, record this run's stories so the next runs don't repeat them:
+
+```bash
+python3 state.py save /tmp/analysis.json
+```
+
+This pushes only to the `claude/oil-state` branch. If it fails, mention it in the report; the email has already gone.
+
+## 6. Finish
+
+End with a two-line report: how many stories were sent, how many were skipped as already sent, and any `errors`
+from the fetch.
