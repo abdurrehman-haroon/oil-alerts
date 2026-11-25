@@ -31,6 +31,8 @@ def _call(method, url, body=None, token=None):
                "User-Agent": "oil-alerts-state"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    if body is not None:
+        headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, method=method, headers=headers,
                                  data=json.dumps(body).encode() if body is not None else None)
     with urllib.request.urlopen(req, timeout=20) as r:
