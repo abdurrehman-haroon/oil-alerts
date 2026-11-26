@@ -523,6 +523,9 @@ FOOT_TEMPLATE = '''
 '''
 
 
+MAX_HEADLINE_ONLY = 3  # not counting High-impact ones (see ROUTINE.md step 2)
+
+
 def validate(stories):
     for i, s in enumerate(stories):
         for field, allowed in (("sentiment", SENT), ("impact", IMPACT), ("horizon", HORIZON)):
@@ -531,6 +534,10 @@ def validate(stories):
         for field in ("headline", "link", "source", "summary", "why"):
             if not s.get(field):
                 raise SystemExit(f"story {i}: missing {field}")
+    thin = [i for i, s in enumerate(stories) if s.get("headline_only") and s.get("impact") != "High"]
+    if len(thin) > MAX_HEADLINE_ONLY:
+        raise SystemExit(f"{len(thin)} headline-only stories (non-High impact) at positions {thin}; keep at most "
+                         f"{MAX_HEADLINE_ONLY}, dropping the least important")
 
 
 FONT_RE = re.compile(r"font:\s*(bold\s+)?(\d+px)(?:/([\d.]+(?:px)?))?\s+([^;\"]+)")

@@ -27,6 +27,10 @@ as an update, e.g. headline "UPDATE: …", and say what changed.
 Group items that cover the same event into one story. For each story pick the best source: one with `"access": "full"`
 if any, otherwise the earliest. Cap the email at 15 stories, keeping the most important.
 
+Prefer stories you can actually read. Stories with a `"access": "full"` source come first; a headline-only story
+(every source `"access": "headline"`) is thin, so keep at most 3 of them, choosing the most important. A
+headline-only story with `High` impact doesn't count toward that limit, so breaking news is never dropped.
+
 For each story write:
 
 | field | rule |
