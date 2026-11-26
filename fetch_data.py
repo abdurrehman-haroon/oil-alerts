@@ -236,6 +236,34 @@ def funding_history():
     return out, errors
 
 
+
+def positioning():
+    """Binance futures positioning per symbol (hourly buckets): who is long, how open interest moved, who is aggressing."""
+    base = "https://www.binance.com/futures/data/"
+    out, errors = {}, []
+    for sym in ("CLUSDT", "BZUSDT"):
+        try:
+            q = f"?symbol={sym}&period=1h&limit=25"
+            ls = get_json(base + "globalLongShortAccountRatio" + q)
+            oi = get_json(base + "openInterestHist" + q)
+            tk = get_json(base + "takerlongshortRatio" + q)
+            pct = lambda a, b: round((float(a) / float(b) - 1) * 100, 2) if float(b) else None
+            buy, sell = sum(float(r["buyVol"]) for r in tk[-24:]), sum(float(r["sellVol"]) for r in tk[-24:])
+            out[sym] = {
+                "as_of_utc": dt.datetime.fromtimestamp(ls[-1]["timestamp"] / 1000, UTC).isoformat(),
+                "long_pct": round(float(ls[-1]["longAccount"]) * 100, 1),
+                "long_short_ratio": float(ls[-1]["longShortRatio"]),
+                "long_short_ratio_24h_ago": float(ls[0]["longShortRatio"]),
+                "oi_usd": round(float(oi[-1]["sumOpenInterestValue"])),
+                "oi_change_pct_1h": pct(oi[-1]["sumOpenInterestValue"], oi[-2]["sumOpenInterestValue"]),
+                "oi_change_pct_24h": pct(oi[-1]["sumOpenInterestValue"], oi[0]["sumOpenInterestValue"]),
+                "taker_buy_sell_1h": float(tk[-1]["buySellRatio"]),
+                "taker_buy_sell_24h": round(buy / sell, 4) if sell else None,
+            }
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"Binance positioning {sym}: {e}")
+    return out, errors
+
 def calendar(now):
     events, errors = [], []
     horizon = now + dt.timedelta(hours=24)
@@ -282,10 +310,11 @@ def main():
     mark_already_sent(n, sent)
     f, e3 = funding_history()
     c, e4 = calendar(now)
+    pos, e5 = positioning()
     json.dump({"generated_utc": now.isoformat(),
                "generated_pkt": now.astimezone(PKT).strftime("%a, %d %b %Y · %I:%M %p PKT"),
-               "news_since_utc": since.isoformat(), "prices": p, "funding_history": f,
-               "news": n, "calendar_next_24h": c, "errors": e1 + e2 + e3 + e4,
+               "news_since_utc": since.isoformat(), "prices": p, "funding_history": f, "positioning": pos,
+               "news": n, "calendar_next_24h": c, "errors": e1 + e2 + e3 + e4 + e5,
                "recently_sent": [{"headline": x["headline"], "sent_utc": x["sent_utc"]} for x in sent
                                  if dt.datetime.fromisoformat(x["sent_utc"]) >= now - dt.timedelta(hours=24)],
                "sources_ok": [name for name, key in (("Hyperliquid", "exchange"), ("Binance", "binance"))
