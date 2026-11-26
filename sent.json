@@ -1,5 +1,19 @@
 [
  {
+  "headline": "UPDATE: Oil rises on supply concerns as Iran claims mine strikes on ships",
+  "link": "https://www.investing.com/news/commodities-news/oil-rises-on-supply-concerns-as-iran-claims-mine-strikes-on-ships-5051949",
+  "sentiment": "Slightly Bullish",
+  "impact": "Medium",
+  "sent_utc": "2026-11-26T09:02:25+00:00"
+ },
+ {
+  "headline": "Libya Plans New Oil Bidding Rounds Despite Mounting Security Risks",
+  "link": "https://oilprice.com/Latest-Energy-News/World-News/Libya-Plans-New-Oil-Bidding-Rounds-Despite-Mounting-Security-Risks.html",
+  "sentiment": "Slightly Bearish",
+  "impact": "Low",
+  "sent_utc": "2026-11-26T09:02:25+00:00"
+ },
+ {
   "headline": "Oil edges higher as Hormuz attacks threaten Persian Gulf supply recovery",
   "link": "https://www.investing.com/news/commodities-news/oil-steadies-as-hormuz-attacks-threaten-supply-recovery-inventory-build-weighs-5051937",
   "sentiment": "Bullish",
