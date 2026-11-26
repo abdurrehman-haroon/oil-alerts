@@ -80,101 +80,88 @@ def header(now):
 '''
 
 
-def price_cell(px, chg, size, border, closed=False):
-    if px is None:
-        return (f'<td valign="top" style="padding:12px 0;{border}"><span style="font:12px \'Courier New\',monospace;'
-                f'color:#5e6673;">unavailable</span></td>')
-    pc = DIM if closed else "#f0b90b"
-    if chg is None:
-        line = ""
-    else:
-        arrow, col = ("▲", GREEN) if chg > 0 else ("▼", RED) if chg < 0 else ("■", GREY)
-        if closed:
-            col = DIM
-        line = (f'\n          <div style="font:bold 12px Arial,sans-serif;color:{col};">{arrow} {signed(chg)} '
-                f'<span style="font-weight:normal;color:#5e6673;">1h</span></div>')
-    return (f'<td valign="top" style="padding:12px 0;{border}">\n'
-            f'          <div style="font:bold {size}px \'Courier New\',Courier,monospace;color:{pc};line-height:1.1;">{px:.2f}</div>{line}\n'
-            f'        </td>')
+# One card for both contracts (approved design, change #7): prices, gap and funding on the lighter top part,
+# Binance positioning (crowd, money, flow) on the darker bottom part. Filled with str.format(**price_card_values()).
+PRICE_CARD = '''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#1a1f25" style="background-color:#1a1f25;border-radius:6px;"><tr bgcolor="#1a1f25" style="background-color:#1a1f25;"><td width="26%" style="padding:10px 10px 6px 12px;border-bottom:1px solid #1e2329;">&nbsp;</td><td width="37%" style="padding:10px 8px 6px 0;border-bottom:1px solid #1e2329;font-weight:bold;font-size:14px;font-family:Arial,sans-serif;color:#eaecef;">CL</td><td width="37%" style="padding:10px 12px 6px 0;border-bottom:1px solid #1e2329;font-weight:bold;font-size:14px;font-family:Arial,sans-serif;color:#eaecef;">Brent</td></tr><tr bgcolor="#1a1f25" style="background-color:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;border-bottom:1px solid #1e2329;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;">TRADITIONAL<br>MARKET</td><td width="37%" valign="top" style="padding:8px 8px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:22px;font-family:'Courier New',monospace;color:#eaecef;color:{cl_tm_color};line-height:1.1;">{cl_tm_price}</div><div style="padding-top:2px;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;color:#eaecef;color:{cl_tm_chg_color};">{cl_tm_chg} <span style="font-size:12px;font-family:Arial,sans-serif;color:#5e6673;">1h</span></div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:22px;font-family:'Courier New',monospace;color:#eaecef;color:{bz_tm_color};line-height:1.1;">{bz_tm_price}</div><div style="padding-top:2px;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;color:#eaecef;color:{bz_tm_chg_color};">{bz_tm_chg} <span style="font-size:12px;font-family:Arial,sans-serif;color:#5e6673;">1h</span></div></td></tr><tr bgcolor="#1a1f25" style="background-color:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;border-bottom:1px solid #1e2329;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;">BINANCE</td><td width="37%" valign="top" style="padding:8px 8px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:22px;font-family:'Courier New',monospace;color:#eaecef;color:{cl_bn_color};line-height:1.1;">{cl_bn_price}</div><div style="padding-top:2px;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;color:#eaecef;color:{cl_bn_chg_color};">{cl_bn_chg} <span style="font-size:12px;font-family:Arial,sans-serif;color:#5e6673;">1h</span></div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:22px;font-family:'Courier New',monospace;color:#eaecef;color:{bz_bn_color};line-height:1.1;">{bz_bn_price}</div><div style="padding-top:2px;font-weight:bold;font-size:12px;font-family:Arial,sans-serif;color:#eaecef;color:{bz_bn_chg_color};">{bz_bn_chg} <span style="font-size:12px;font-family:Arial,sans-serif;color:#5e6673;">1h</span></div></td></tr><tr bgcolor="#1a1f25" style="background-color:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;"><div style="line-height:20px;">GAP</div><div style="line-height:20px;white-space:nowrap;">FUNDING <span style="font-weight:normal;">4H</span></div></td><td width="37%" valign="top" style="padding:8px 8px 8px 0;"><div style="line-height:20px;"><span style="font-weight:bold;font-size:13px;font-family:'Courier New',monospace;color:#eaecef;color:{cl_gap_color};">{cl_gap}</span></div><div style="line-height:20px;"><span style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;color:{cl_funding_rate_color};white-space:nowrap;">{cl_funding_rate}</span> <span style="font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#848e9c;white-space:nowrap;">{cl_funding_who}</span></div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;"><div style="line-height:20px;"><span style="font-weight:bold;font-size:13px;font-family:'Courier New',monospace;color:#eaecef;color:{bz_gap_color};">{bz_gap}</span></div><div style="line-height:20px;"><span style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;color:{bz_funding_rate_color};white-space:nowrap;">{bz_funding_rate}</span> <span style="font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#848e9c;white-space:nowrap;">{bz_funding_who}</span></div></td></tr><tr><td colspan="3" bgcolor="#2b3139" style="background-color:#2b3139;height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr><tr bgcolor="#12161a" style="background-color:#12161a;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;border-bottom:1px solid #1e2329;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;">CROWD</td><td width="37%" valign="top" style="padding:8px 8px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{cl_long_pct}% long</div><div style="padding-top:4px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr bgcolor="#12161a" style="background-color:#12161a;"><td width="{cl_long_w}%" height="5" bgcolor="#0ecb81" style="background-color:#0ecb81;font-size:0;line-height:0;">&nbsp;</td><td width="{cl_short_w}%" height="5" bgcolor="#f6465d" style="background-color:#f6465d;font-size:0;line-height:0;">&nbsp;</td></tr></table></div><div style="padding-top:4px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{cl_crowd_color};">{cl_crowd_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">L/S {cl_ls_now}, was {cl_ls_24h}</div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{bz_long_pct}% long</div><div style="padding-top:4px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr bgcolor="#12161a" style="background-color:#12161a;"><td width="{bz_long_w}%" height="5" bgcolor="#0ecb81" style="background-color:#0ecb81;font-size:0;line-height:0;">&nbsp;</td><td width="{bz_short_w}%" height="5" bgcolor="#f6465d" style="background-color:#f6465d;font-size:0;line-height:0;">&nbsp;</td></tr></table></div><div style="padding-top:4px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{bz_crowd_color};">{bz_crowd_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">L/S {bz_ls_now}, was {bz_ls_24h}</div></td></tr><tr bgcolor="#12161a" style="background-color:#12161a;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;border-bottom:1px solid #1e2329;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;">MONEY</td><td width="37%" valign="top" style="padding:8px 8px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{cl_oi_usd}</div><div style="padding-top:2px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{cl_oi_color};">{cl_oi_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">{cl_oi_24h} 24h · {cl_oi_1h} 1h</div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;border-bottom:1px solid #1e2329;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{bz_oi_usd}</div><div style="padding-top:2px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{bz_oi_color};">{bz_oi_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">{bz_oi_24h} 24h · {bz_oi_1h} 1h</div></td></tr><tr bgcolor="#12161a" style="background-color:#12161a;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;font-weight:bold;font-size:10px;font-family:Arial,sans-serif;color:#5e6673;letter-spacing:.5px;">FLOW 1H</td><td width="37%" valign="top" style="padding:8px 8px 8px 0;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{cl_flow_1h}</div><div style="padding-top:2px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{cl_flow_color};">{cl_flow_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">24h {cl_flow_24h}</div></td><td width="37%" valign="top" style="padding:8px 12px 8px 0;"><div style="font-weight:bold;font-size:12px;font-family:'Courier New',monospace;color:#eaecef;">{bz_flow_1h}</div><div style="padding-top:2px;font-weight:bold;font-size:11px;font-family:Arial,sans-serif;color:#eaecef;color:{bz_flow_color};">{bz_flow_read}</div><div style="font-size:10px;font-family:Arial,sans-serif;color:#5e6673;">24h {bz_flow_24h}</div></td></tr></table>'''
 
 
-def price_row(label, key, prices, size, last, now):
-    border = "" if last else "border-bottom:1px solid #1e2329;"
-    ex = prices.get(key, {}).get("exchange", {})
-    bn = prices.get(key, {}).get("binance", {})
-    ex_px, bn_px = num(ex.get("last")), num(bn.get("last"))
-    closed = True
+def _money(x):
+    return f"${x / 1e9:.2f}B" if x >= 1e9 else f"${x / 1e6:.0f}M"
+
+
+def _exchange_closed(ex, now):
     if "market_open" in ex:
-        closed = not ex["market_open"]
-    elif ex.get("last_bar_utc"):
-        age = now - dt.datetime.fromisoformat(ex["last_bar_utc"])
-        closed = age > dt.timedelta(minutes=30)
-    if ex_px is not None and bn_px is not None:
-        gap = bn_px - ex_px
-        gcol = GREEN if gap > 0 else RED if gap < 0 else GREY
-        gap_html = f'<div style="font:bold 16px \'Courier New\',Courier,monospace;color:{gcol};">{signed(gap)}</div>'
-    else:
-        gap_html = '<div style="font:bold 16px \'Courier New\',Courier,monospace;color:#5e6673;">—</div>'
-    return f'''      <!-- {label} -->
-      <tr>
-        <td valign="top" style="padding:14px 0 12px;{border}">
-          <div style="font:bold 15px Arial,sans-serif;color:#eaecef;">{label}</div>
-        </td>
-        {price_cell(ex_px, num(ex.get("change_1h")), size, border, closed)}
-        {price_cell(bn_px, num(bn.get("change_1h")), size, border)}
-        <td valign="top" align="right" style="padding:14px 0 12px;{border}">
-          {gap_html}
-        </td>
-      </tr>
-'''
+        return not ex["market_open"]
+    if ex.get("last_bar_utc"):
+        return now - dt.datetime.fromisoformat(ex["last_bar_utc"]) > dt.timedelta(minutes=30)
+    return True
 
 
-def funding_row(label, rate, last, futures_open=True):
-    border = "" if last else "border-bottom:1px solid #1e2329;"
-    r = num(rate)
-    if r is None:
-        who = '<span style="color:#5e6673;">unavailable</span>'
-        val = ""
-    elif r == 0:
-        # Binance keeps trading 24/7 but holds funding at 0 while NYMEX/ICE are closed.
-        why = "" if futures_open else ' <span style="color:#5e6673;">· paused while NYMEX/ICE closed</span>'
-        who = f'<span style="color:#848e9c;">Nobody pays</span>{why}'
-        val = (f'<span style="font:bold 13px \'Courier New\',monospace;color:#848e9c;">0.000%</span> '
-               f'<span style="font:10px Arial,sans-serif;color:#5e6673;">per 4h</span>')
-    else:
-        payer, payee = (("Shorts", RED), ("Longs", GREEN)) if r < 0 else (("Longs", GREEN), ("Shorts", RED))
-        who = (f'<b style="color:{payer[1]};">{payer[0]}</b> <span style="color:#5e6673;">pay</span> '
-               f'<b style="color:{payee[1]};">{payee[0]}</b>')
-        val = (f'<span style="font:bold 13px \'Courier New\',monospace;color:#eaecef;">{signed(r * 100, 3)}%</span> '
-               f'<span style="font:10px Arial,sans-serif;color:#5e6673;">per 4h</span>')
-    return f'''      <tr>
-        <td width="22%" style="padding:7px 0 7px 12px;{border}font:bold 12px Arial,sans-serif;color:#eaecef;">{label}</td>
-        <td style="padding:7px 0;{border}font:12px Arial,sans-serif;color:#848e9c;">{who}</td>
-        <td align="right" style="padding:7px 12px 7px 0;{border}white-space:nowrap;">{val}</td>
-      </tr>
-'''
+def price_card_values(data, now):
+    v, prices, pos = {}, data.get("prices", {}), data.get("positioning", {})
+    for p, key, sym in (("cl", "CL", "CLUSDT"), ("bz", "BRENT", "BZUSDT")):
+        ex, bn = prices.get(key, {}).get("exchange", {}), prices.get(key, {}).get("binance", {})
+        closed = _exchange_closed(ex, now)
+        # prices + 1h change
+        for kind, src, is_closed in (("tm", ex, closed), ("bn", bn, False)):
+            px, ch = num(src.get("last")), num(src.get("change_1h"))
+            v[f"{p}_{kind}_price"] = "—" if px is None else f"{px:.2f}"
+            v[f"{p}_{kind}_color"] = DIM if (px is None or is_closed) else "#f0b90b"
+            if ch is None:
+                v[f"{p}_{kind}_chg"], v[f"{p}_{kind}_chg_color"] = ("unavailable" if px is None else "—"), DIM
+            else:
+                arrow, col = ("▲", GREEN) if ch > 0 else ("▼", RED) if ch < 0 else ("■", GREY)
+                v[f"{p}_{kind}_chg"], v[f"{p}_{kind}_chg_color"] = f"{arrow} {signed(ch)}", DIM if is_closed else col
+        # gap
+        a, b = num(ex.get("last")), num(bn.get("last"))
+        if a is None or b is None:
+            v[f"{p}_gap"], v[f"{p}_gap_color"] = "—", DIM
+        else:
+            g = b - a
+            v[f"{p}_gap"], v[f"{p}_gap_color"] = signed(g), GREEN if g > 0 else RED if g < 0 else GREY
+        # funding: Binance keeps trading 24/7 but holds funding at 0 while NYMEX/ICE are closed.
+        r = num(bn.get("funding_rate"))
+        if r is None:
+            v.update({f"{p}_funding_rate": "—", f"{p}_funding_rate_color": DIM,
+                      f"{p}_funding_who": f'<span style="color:{DIM};">unavailable</span>'})
+        elif r == 0:
+            why = "" if not closed else f' <span style="color:{DIM};font-weight:normal;">· paused, NYMEX/ICE closed</span>'
+            v.update({f"{p}_funding_rate": "0.000%", f"{p}_funding_rate_color": GREY, f"{p}_funding_who": "Nobody pays" + why})
+        else:
+            (pa, pc), (ra, rc) = (("Shorts", RED), ("Longs", GREEN)) if r < 0 else (("Longs", GREEN), ("Shorts", RED))
+            v.update({f"{p}_funding_rate": signed(r * 100, 3) + "%", f"{p}_funding_rate_color": "#eaecef",
+                      f"{p}_funding_who": f'<span style="color:{pc};">{pa}</span> <span style="color:{DIM};font-weight:normal;">pay</span> '
+                                          f'<span style="color:{rc};">{ra}</span>'})
+        # positioning
+        q = pos.get(sym)
+        if not q:
+            off = {"read": "unavailable", "color": DIM}
+            v.update({f"{p}_long_pct": "—", f"{p}_long_w": "50", f"{p}_short_w": "50", f"{p}_ls_now": "—", f"{p}_ls_24h": "—",
+                      f"{p}_oi_usd": "—", f"{p}_oi_24h": "—", f"{p}_oi_1h": "—", f"{p}_flow_1h": "—", f"{p}_flow_24h": "—"})
+            for k in ("crowd", "oi", "flow"):
+                v[f"{p}_{k}_read"], v[f"{p}_{k}_color"] = off["read"], off["color"]
+            continue
+        lp, o, t = q["long_pct"], q["oi_change_pct_24h"], q["taker_buy_sell_1h"]
+        crowd = (("Crowd heavily long", GREEN) if lp >= 60 else ("Crowd leans long", GREEN) if lp > 52 else
+                 ("Crowd split", GREY) if lp >= 48 else ("Crowd leans short", RED) if lp > 40 else ("Crowd heavily short", RED))
+        money = ("Fresh money in", GREEN) if o >= 2 else ("Money leaving", RED) if o <= -2 else ("Steady money", GREY)
+        flow = (("Buyers chasing", GREEN) if t > 1.10 else ("Buyers edging ahead", GREEN) if t > 1.02 else
+                ("Balanced", GREY) if t >= 0.98 else ("Sellers edging ahead", RED) if t >= 0.90 else ("Sellers hitting bids", RED))
+        f24 = q.get("taker_buy_sell_24h")
+        v.update({f"{p}_long_pct": f"{lp:.1f}", f"{p}_long_w": str(round(lp)), f"{p}_short_w": str(100 - round(lp)),
+                  f"{p}_crowd_read": crowd[0], f"{p}_crowd_color": crowd[1],
+                  f"{p}_ls_now": f"{q['long_short_ratio']:.2f}", f"{p}_ls_24h": f"{q['long_short_ratio_24h_ago']:.2f}",
+                  f"{p}_oi_usd": _money(q["oi_usd"]), f"{p}_oi_read": money[0], f"{p}_oi_color": money[1],
+                  f"{p}_oi_24h": signed(o) + "%",
+                  f"{p}_oi_1h": "—" if q.get("oi_change_pct_1h") is None else signed(q["oi_change_pct_1h"]) + "%",
+                  f"{p}_flow_1h": f"{t:.2f}", f"{p}_flow_read": flow[0], f"{p}_flow_color": flow[1],
+                  f"{p}_flow_24h": "—" if f24 is None else f"{f24:.2f}"})
+    return v
 
 
 def prices_section(data, now):
-    p = data.get("prices", {})
-    fut_open = p.get("CL", {}).get("exchange", {}).get("market_open", True)
-    return f'''
-  <!-- PRICES -->
-  <tr><td style="padding:20px 20px 6px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;">
-      <tr style="font:bold 10px Arial,sans-serif;color:#5e6673;letter-spacing:1px;">
-        <td width="16%" style="padding:0 0 8px;border-bottom:1px solid #1e2329;">&nbsp;</td>
-        <td width="33%" style="padding:0 0 8px;border-bottom:1px solid #1e2329;color:#b7bdc6;">TRADITIONAL MARKET</td>
-        <td width="33%" style="padding:0 0 8px;border-bottom:1px solid #1e2329;color:#b7bdc6;">BINANCE</td>
-        <td width="18%" align="right" style="padding:0 0 8px;border-bottom:1px solid #1e2329;color:#b7bdc6;">GAP</td>
-      </tr>
-{price_row("CL", "CL", p, 30, False, now)}{price_row("BRENT", "BRENT", p, 22, True, now)}    </table>
-
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#161a1e" style="background:#161a1e;border-radius:6px;margin-top:10px;">
-      <tr><td colspan="3" style="padding:8px 12px 2px;font:bold 10px Arial,sans-serif;color:#5e6673;letter-spacing:1px;">BINANCE FUNDING</td></tr>
-{funding_row("CL", p.get("CL", {}).get("binance", {}).get("funding_rate"), False, fut_open)}{funding_row("Brent", p.get("BRENT", {}).get("binance", {}).get("funding_rate"), True, fut_open)}    </table>
-  </td></tr>
-'''
+    return ('\n  <!-- PRICES -->\n  <tr><td style="padding:20px 20px 6px;">\n'
+            + PRICE_CARD.format(**price_card_values(data, now)) + '\n  </td></tr>\n')
 
 
 # ---------------------------------------------------------------- news
