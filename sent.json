@@ -1,5 +1,19 @@
 [
  {
+  "headline": "Oil Prices Rebound as Middle East Supply Fears Return",
+  "link": "https://oilprice.com/Energy/Energy-General/Oil-Prices-Rebound-as-Middle-East-Supply-Fears-Return.html",
+  "sentiment": "Slightly Bullish",
+  "impact": "Medium",
+  "sent_utc": "2026-11-26T13:02:11+00:00"
+ },
+ {
+  "headline": "UPDATE: Iran Says LNG Carrier Exploded After Hitting a Mine in Hormuz",
+  "link": "https://oilprice.com/Latest-Energy-News/World-News/Iran-Says-LNG-Carrier-Exploded-After-Hitting-a-Mine-in-Hormuz.html",
+  "sentiment": "Slightly Bullish",
+  "impact": "Medium",
+  "sent_utc": "2026-11-26T13:02:11+00:00"
+ },
+ {
   "headline": "Oil prices rise, Brent settles above $90 a barrel for first time in over a week",
   "link": "https://www.investing.com/news/commodities-news/oil-mixed-as-hormuz-attacks-mount-supply-surplus-and-weak-fuel-margins-weigh-5049487",
   "sentiment": "Slightly Bullish",
