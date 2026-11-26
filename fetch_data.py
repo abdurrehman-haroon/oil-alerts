@@ -30,21 +30,17 @@ FEEDS = [
     ("CNBC Energy", "https://www.cnbc.com/id/19836768/device/rss/rss.html", "full", False),
     ("Guardian", "https://www.theguardian.com/business/oil/rss", "full", False),
     ("BBC", "https://feeds.bbci.co.uk/news/business/rss.xml", "full", True),
-    ("FXStreet", "https://www.fxstreet.com/rss/news", "full", True),
-    ("Offshore-Energy", "https://www.offshore-energy.biz/feed", "full", True),
     ("gCaptain", "https://gcaptain.com/feed/", "full", True),
     ("NGI", "https://www.naturalgasintel.com/feed/", "headline", True),  # article pages are paywall teasers
-    ("World Oil", "https://www.worldoil.com/rss?feed=news", "full", False),
     ("Google News", "https://news.google.com/rss/search?q=%22crude+oil%22+OR+WTI+OR+Brent+OR+OPEC+when:1d&hl=en-US&gl=US&ceid=US:en", "headline", False),
     ("Investing.com", "https://www.investing.com/rss/news_11.rss", "headline", True),
     ("MarketWatch", "https://feeds.content.dowjones.io/public/rss/mw_topstories", "headline", True),
     ("FT", "https://www.ft.com/oil?format=rss", "headline", False),
-    ("Nasdaq", "https://www.nasdaq.com/feed/rssoutbound?category=Commodities", "headline", True),
     ("FXEmpire", "https://www.fxempire.com/api/v1/en/articles/rss/news", "headline", True),
 ]
 
 # Feeds that block the cloud server (HTTP 403) → domain to search on Google News instead.
-SITE_FALLBACK = {"CNBC Energy": "cnbc.com", "FXStreet": "fxstreet.com"}
+SITE_FALLBACK = {"CNBC Energy": "cnbc.com"}
 
 OIL_RE = re.compile(
     r"\b(crude|oil|wti|brent|opec|petroleum|barrels?|bpd|refiner(y|ies)|tankers?|"
