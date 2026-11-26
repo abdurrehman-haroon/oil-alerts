@@ -317,7 +317,7 @@ def main():
 
     p, e1 = prices()
     n, e2, sources_ok = news(since, a.max_articles)
-    import state  # same folder; reads the claude/oil-state branch, never fails
+    import state  # same folder; reads data/stories on origin/main, never fails
     sent = state.load()
     mark_already_sent(n, sent)
     f, e3 = funding_history()
