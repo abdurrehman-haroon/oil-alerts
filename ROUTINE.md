@@ -91,13 +91,15 @@ final report.
 
 ## 5. Remember what was sent
 
-After a successful send, record this run's stories so the next runs don't repeat them:
+After a successful send, record this run's stories, prices and positioning so later runs don't repeat them and the
+daily wrap has the day's history:
 
 ```bash
-python3 state.py save /tmp/analysis.json
+python3 state.py save /tmp/analysis.json /tmp/data.json
 ```
 
-This pushes only to the `claude/oil-state` branch. If it fails, mention it in the report; the email has already gone.
+This appends to `data/stories/` and `data/snapshots/` and pushes one commit to `main`; it is the only push allowed.
+If it fails, mention it in the report; the email has already gone.
 
 ## 6. Finish
 
