@@ -287,6 +287,23 @@ def calendar(now):
     return events, errors
 
 
+# Run times in UTC, matching the routines' crons. Trading days (Mon–Fri) every 2.5h; the Fri 22:31 run is the
+# close-of-week one (CME crude closes Fri 22:00 UTC in winter, 21:00 in summer). Off days (Sat/Sun) every 6h.
+TRADING_SLOTS = [(0, 1), (2, 31), (5, 1), (7, 31), (10, 1), (12, 31), (15, 1), (17, 31), (20, 1), (22, 31)]
+OFF_DAY_SLOTS = [(4, 1), (10, 1), (16, 1), (22, 1)]
+
+
+def previous_run(now):
+    """Scheduled time of the run before this one, so the news window covers exactly the gap between emails."""
+    slots = []
+    for days_back in range(3):
+        day = (now - dt.timedelta(days=days_back)).date()
+        for h, m in (TRADING_SLOTS if day.weekday() < 5 else OFF_DAY_SLOTS):
+            slots.append(dt.datetime(day.year, day.month, day.day, h, m, tzinfo=UTC))
+    past = sorted(t for t in slots if t <= now)
+    return past[-2] if len(past) >= 2 else now - dt.timedelta(hours=6)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--since", help="only news published after this ISO time (UTC)")
@@ -296,12 +313,7 @@ def main():
     if a.since:
         since = dt.datetime.fromisoformat(a.since.replace("Z", "+00:00"))
     else:
-        # Window = time since the previous scheduled run (routines fire at :32): hourly Mon–Fri UTC,
-        # every 4h Sat/Sun UTC. Sat 00:32 follows Fri 23:32 (1h); Mon 00:32 follows Sun 20:32 (4h).
-        # 5 extra minutes cover start-up delay; a rare duplicate beats a missed story.
-        wd, hr = now.weekday(), now.hour
-        weekend = (wd == 5 and hr >= 1) or wd == 6 or (wd == 0 and hr == 0)
-        since = now - dt.timedelta(hours=4 if weekend else 1, minutes=5)
+        since = previous_run(now) - dt.timedelta(minutes=5)  # 5 extra minutes: a rare duplicate beats a missed story
 
     p, e1 = prices()
     n, e2, sources_ok = news(since, a.max_articles)
