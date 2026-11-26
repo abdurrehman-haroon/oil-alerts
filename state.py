@@ -2,99 +2,54 @@
 """Remember which stories were already emailed, so later runs don't repeat them.
 
 The list lives in `sent.json` on the `claude/oil-state` branch of this repository (headlines and public
-links only, no personal data). It is read and written through GitHub's REST API over HTTPS, because the
-cloud routine's own git checkout is read-only (git push is blocked by the sandbox proxy).
+links only, no personal data), kept apart from `main` so the code history stays clean.
 
-  python3 state.py load                       # print the last 48h of sent stories as JSON
-  python3 state.py save /tmp/analysis.json    # add this run's stories to sent.json
-
-Reading works without a token (public repo). Saving needs GH_STATE_TOKEN: a fine-grained personal access
-token limited to this repository with "Contents: Read and write".
+  python3 state.py load                 # print the last 48h of sent stories as JSON (empty list if none)
+  python3 state.py save /tmp/analysis.json   # add this run's stories and push the branch
 """
-import base64
 import datetime as dt
 import json
 import os
+import subprocess
 import sys
-import urllib.error
-import urllib.request
+import tempfile
 
-REPO = "abdurrehman-haroon/oil-alerts"
 BRANCH = "claude/oil-state"
-PATH = "sent.json"
 KEEP = dt.timedelta(hours=48)
-API = f"https://api.github.com/repos/{REPO}"
+BOT = {"GIT_AUTHOR_NAME": "oil-alerts bot", "GIT_AUTHOR_EMAIL": "oil-alerts-bot@users.noreply.github.com",
+       "GIT_COMMITTER_NAME": "oil-alerts bot", "GIT_COMMITTER_EMAIL": "oil-alerts-bot@users.noreply.github.com"}
 
 
-def _call(method, url, body=None, token=None):
-    headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28",
-               "User-Agent": "oil-alerts-state"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    if body is not None:
-        headers["Content-Type"] = "application/json"
-    req = urllib.request.Request(url, method=method, headers=headers,
-                                 data=json.dumps(body).encode() if body is not None else None)
+def git(*args, input_text=None, check=True):
+    return subprocess.run(["git", *args], input=input_text, text=True, capture_output=True, check=check,
+                          env={**os.environ, **BOT}).stdout.strip()
+
+
+def load():
+    """Sent stories from the last 48h, newest first. Never raises: a missing branch means nothing sent yet."""
     try:
-        with urllib.request.urlopen(req, timeout=20) as r:
-            return json.load(r)
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")[:300]
-        print(f"state: {method} {url.replace(API, '')} -> HTTP {e.code}: {detail}", file=sys.stderr)
-        raise
-
-
-def _read(token=None):
-    """(items, sha) from sent.json on the state branch; ([], None) if the file or branch doesn't exist yet."""
-    try:
-        f = _call("GET", f"{API}/contents/{PATH}?ref={BRANCH}", token=token)
-        return json.loads(base64.b64decode(f["content"])), f["sha"]
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return [], None
-        raise
-
-
-def _recent(items):
+        git("fetch", "--quiet", "origin", f"{BRANCH}:refs/remotes/origin/{BRANCH}")
+        items = json.loads(git("show", f"origin/{BRANCH}:sent.json"))
+    except (subprocess.CalledProcessError, json.JSONDecodeError):
+        return []
     cutoff = dt.datetime.now(dt.timezone.utc) - KEEP
     return [i for i in items if dt.datetime.fromisoformat(i["sent_utc"]) >= cutoff]
 
 
-def load():
-    """Sent stories from the last 48h, newest first. Never raises."""
-    try:
-        return _recent(_read(os.environ.get("GH_STATE_TOKEN"))[0])
-    except Exception as e:  # noqa: BLE001 — memory is a nice-to-have; never block the email
-        print(f"state: could not read {PATH} ({type(e).__name__}: {e})", file=sys.stderr)
-        return []
-
-
-def _ensure_branch(token):
-    try:
-        _call("GET", f"{API}/git/ref/heads/{BRANCH}", token=token)
-    except urllib.error.HTTPError as e:
-        if e.code != 404:
-            raise
-        main_sha = _call("GET", f"{API}/git/ref/heads/main", token=token)["object"]["sha"]
-        _call("POST", f"{API}/git/refs", {"ref": f"refs/heads/{BRANCH}", "sha": main_sha}, token=token)
-
-
 def save(analysis_path):
-    token = os.environ.get("GH_STATE_TOKEN", "").strip()
-    if not token:
-        sys.exit("state: GH_STATE_TOKEN is not set, so sent stories were not recorded")
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     stories = json.load(open(analysis_path)).get("stories", [])
-    _ensure_branch(token)
-    items, sha = _read(token)
     items = [{"headline": s["headline"], "link": s["link"], "sentiment": s.get("sentiment"),
-              "impact": s.get("impact"), "sent_utc": now} for s in stories] + _recent(items)
-    body = {"message": f"Sent {len(stories)} stories at {now}", "branch": BRANCH,
-            "content": base64.b64encode(json.dumps(items, ensure_ascii=False, indent=1).encode()).decode(),
-            "committer": {"name": "oil-alerts bot", "email": "oil-alerts-bot@users.noreply.github.com"}}
-    if sha:
-        body["sha"] = sha
-    _call("PUT", f"{API}/contents/{PATH}", body, token=token)
+              "impact": s.get("impact"), "sent_utc": now} for s in stories] + load()
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        json.dump(items, f, ensure_ascii=False, indent=1)
+    blob = git("hash-object", "-w", f.name)
+    tree = git("mktree", input_text=f"100644 blob {blob}\tsent.json\n")
+    has_parent = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"origin/{BRANCH}"],
+                                capture_output=True).returncode == 0
+    parent = ["-p", f"origin/{BRANCH}"] if has_parent else []
+    commit = git("commit-tree", tree, *parent, "-m", f"Sent {len(stories)} stories at {now}")
+    git("push", "--quiet", "origin", f"{commit}:refs/heads/{BRANCH}")
     print(f"saved {len(stories)} stories ({len(items)} remembered from the last 48h)")
 
 
