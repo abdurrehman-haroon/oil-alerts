@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Send the rendered Oil Hourly Brief exactly as rendered, over HTTPS through the Brevo API.
+"""Send a rendered email (Oil Hourly Brief or Oil Daily Wrap) exactly as rendered, over HTTPS through the Brevo API.
 
 Usage: python3 send_email.py /tmp/email.html "Subject line" [/tmp/email.txt]
 
@@ -15,7 +15,13 @@ import sys
 import urllib.error
 import urllib.request
 
-SENDER_NAME = "Oil Hourly Brief"
+DEFAULT_NAME = "Oil Hourly Brief"
+
+
+def sender_name(subject):
+    """The inbox 'from' name: the email's own name, taken from the subject ("Oil Daily Wrap · CL ..." -> "Oil Daily Wrap")."""
+    name = subject.split("·")[0].strip()
+    return name if name.lower().startswith("oil ") else DEFAULT_NAME
 
 
 def env(name, required=True):
@@ -36,7 +42,7 @@ def post(url, payload, headers):
 
 
 def send_brevo(sender, recipients, subject, html, text):
-    payload = {"sender": {"name": SENDER_NAME, "email": sender},
+    payload = {"sender": {"name": sender_name(subject), "email": sender},
                "to": [{"email": r} for r in recipients],
                "subject": subject, "htmlContent": html, "textContent": text}
     return post("https://api.brevo.com/v3/smtp/email", json.dumps(payload).encode(),
