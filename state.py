@@ -92,7 +92,7 @@ def build_lines(analysis, data, now):
     prices = (data or {}).get("prices", {})
     px = price_fields(prices)
     keep = ("headline", "link", "source", "sources_count", "headline_only", "sentiment", "impact", "horizon",
-            "region", "why", "summary")
+            "region", "why", "summary", "published_utc")
     stories = [{**{k: s.get(k) for k in keep}, "sent_utc": stamp, "prices": px} for s in analysis.get("stories", [])]
     snapshot = None
     if data:

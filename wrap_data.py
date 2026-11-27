@@ -58,12 +58,26 @@ def day_prices(start, now):
     return out, errors
 
 
+def positioning_hourly():
+    """Raw hourly Binance rows (last 25h) for the wrap's crowd chart and the per-story 'since then' reads."""
+    out, errors = {}, []
+    for sym in ("CLUSDT", "BZUSDT"):
+        for name in ("globalLongShortAccountRatio", "openInterestHist", "takerlongshortRatio"):
+            try:
+                out.setdefault(sym, {})[name] = fd.get_json(
+                    f"https://www.binance.com/futures/data/{name}?symbol={sym}&period=1h&limit=25")
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"hourly {name} {sym}: {e}")
+    return out, errors
+
+
 def main():
     now = dt.datetime.now(UTC)
     start = now - WINDOW
     prices, errors = day_prices(start, now)
     pos, e2 = fd.positioning()
     live, e3 = fd.prices()
+    hourly, e4 = positioning_hourly()
     try:
         state.fetch()
         stories = state.stories_since(start)
@@ -82,10 +96,10 @@ def main():
     json.dump({"generated_utc": now.isoformat(),
                "generated_pkt": now.astimezone(PKT).strftime("%a, %d %b %Y · %I:%M %p PKT"),
                "window_start_utc": start.isoformat(),
-               "prices": prices, "live": live, "positioning": pos, "snapshots": snaps,
+               "prices": prices, "live": live, "positioning": pos, "positioning_hourly": hourly, "snapshots": snaps,
                "stories": sorted(stories, key=lambda s: s["sent_utc"]), "top_stories": top,
                "sentiment_tally": tally, "story_count": len(stories),
-               "errors": errors + e2 + e3}, sys.stdout, ensure_ascii=False, indent=1)
+               "errors": errors + e2 + e3 + e4}, sys.stdout, ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":

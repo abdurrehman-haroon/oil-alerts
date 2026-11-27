@@ -45,6 +45,7 @@ For each story write:
 | `sentiment` | effect on CL price: `Bullish` (clear, strong upward pressure), `Slightly Bullish`, `Neutral`, `Slightly Bearish`, `Bearish` (clear, strong downward pressure) |
 | `impact` | how much it could move CL: `High` (>2%), `Medium` (0.5–2%), `Low` (<0.5%) |
 | `horizon` | when the effect lands: `Short-term` (hours–days), `Medium-term` (weeks–3 months), `Long-term` (6+ months) |
+| `published_utc` | the best source's `published_utc`, copied as is (null if it has none) |
 | `region` | one short tag: US, Middle East, Russia, China, Europe, Japan, OPEC+, Asia, Africa, Latin America, Global |
 
 Guidance for sentiment and impact:
