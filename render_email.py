@@ -411,7 +411,8 @@ def fixed_events(now):
 
 
 def collect_events(data, analysis, now):
-    events = [{"time_utc": e["time_utc"], "title": e["title"]} for e in data.get("calendar_next_24h", [])]
+    events = [{"time_utc": e["time_utc"], "title": e["title"], "forecast": e.get("forecast"),
+               "previous": e.get("previous")} for e in data.get("calendar_next_24h", [])]
     for f in fixed_events(now):  # skip a fixed event if the calendar feed already lists it within the hour
         ft = dt.datetime.fromisoformat(f["time_utc"])
         dupe = any(abs(dt.datetime.fromisoformat(e["time_utc"]) - ft) < dt.timedelta(hours=1)
@@ -428,14 +429,23 @@ def collect_events(data, analysis, now):
     return sorted(events, key=lambda e: e["t"])
 
 
+def expect_line(e):
+    """'Forecast −1.2M · Previous 0.8M' under a calendar event, when the calendar feed has the numbers."""
+    parts = [f'{label} <b style="font-family:\'Courier New\',monospace;color:#eaecef;">{E(str(e[key]).strip())}</b>'
+             for label, key in (("Forecast", "forecast"), ("Previous", "previous")) if str(e.get(key) or "").strip()]
+    if not parts:
+        return ""
+    return f'<div style="font:11px Arial,sans-serif;color:#848e9c;padding-top:1px;">{" · ".join(parts)}</div>'
+
+
 def next24_section(data, analysis, now):
     events = collect_events(data, analysis, now)
     rows = ""
     for i, e in enumerate(events):
         w = "width:160px;" if i == 0 else ""
         when = f"{e['t']:%a} {e['t'].strftime('%I:%M %p').lstrip('0')} PKT"
-        rows += (f'      <tr><td style="padding:4px 0;{w}color:#848e9c;white-space:nowrap;">{when}</td>'
-                 f'<td style="color:#b7bdc6;">{E(e["title"])}</td></tr>\n')
+        rows += (f'      <tr><td valign="top" style="padding:4px 0;{w}color:#848e9c;white-space:nowrap;">{when}</td>'
+                 f'<td valign="top" style="padding:4px 0;color:#b7bdc6;">{E(e["title"])}{expect_line(e)}</td></tr>\n')
     if not rows:
         rows = '      <tr><td style="padding:4px 0;color:#848e9c;">No scheduled oil events in the next 24 hours.</td></tr>\n'
 
