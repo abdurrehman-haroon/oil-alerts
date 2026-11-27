@@ -26,11 +26,11 @@ BLOCK, BLOCK_GAP = 5, 1          # news block height / gap, px
 # Shorthand fonts are fine here: email_safe() expands them, as in render_email.py.
 LINE = "border-bottom:1px solid #1e2329;"
 LABEL = "font:bold 10px Arial,sans-serif;color:#5e6673;letter-spacing:.5px;"
-MONO = "font-family:'Courier New',monospace;"
+MONO = "font-family:Arial,Helvetica,sans-serif;font-weight:bold;"  # Arial digits are fixed-width on Android, iOS and desktop
 
 SNIPPETS = {
 # ---------------------------------------------------------------- header
-"HEADER": '''  <tr><td bgcolor="#07090c" style="background:#07090c;padding:16px 20px;border-bottom:1px solid #1e2329;">
+"HEADER": '''  <tr><td bgcolor="#07090c" style="background:#07090c;padding:16px 16px;border-bottom:1px solid #1e2329;">
     <div style="font:bold 18px Arial,sans-serif;color:#eaecef;letter-spacing:.5px;">Oil Daily Wrap</div>
     <div style="font:12px Arial,sans-serif;color:#848e9c;margin-top:4px;">{when}</div>
     <div style="font:11px Arial,sans-serif;color:#5e6673;margin-top:2px;">The last 24 hours, from {window_start} PKT yesterday · after NYMEX settlement</div>
@@ -42,48 +42,48 @@ SNIPPETS = {
     '''<td width="37%" style="padding:10px 8px 6px 0;''' + LINE + '''font:bold 14px Arial,sans-serif;color:#eaecef;">CL</td>'''
     '''<td width="37%" style="padding:10px 12px 6px 0;''' + LINE + '''font:bold 14px Arial,sans-serif;color:#eaecef;">Brent</td></tr>'''
     '''<tr bgcolor="#1a1f25" style="background:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;''' + LINE + LABEL + '''">TRADITIONAL<br>MARKET<br><span style="font-weight:normal;">day change</span></td>{cl_tm_cell}{bz_tm_cell}</tr>'''
-    '''<tr bgcolor="#1a1f25" style="background:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;''' + LINE + LABEL + '''">DAY<br>RANGE<br><span style="font-weight:normal;">open &rarr; close</span></td>{cl_range_cell}{bz_range_cell}</tr>'''
+    '''<tr bgcolor="#1a1f25" style="background:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;''' + LINE + LABEL + '''">DAY<br>RANGE<br><span style="font-weight:normal;white-space:nowrap;">open &rarr; <span style="color:#f0b90b;">close</span></span></td>{cl_range_cell}{bz_range_cell}</tr>'''
     '''<tr bgcolor="#1a1f25" style="background:#1a1f25;"><td width="26%" valign="top" style="padding:9px 10px 8px 12px;''' + LABEL + '''">BINANCE<br><span style="font-weight:normal;">day change</span></td>{cl_bn_cell}{bz_bn_cell}</tr>'''
     '''</table>''',
 "TM_CELL": '''<td width="37%" valign="top" style="padding:8px {pad} 8px 0;''' + LINE + '''">'''
-    '''<div style="font:bold 22px 'Courier New',monospace;color:#f0b90b;line-height:1.1;">{close}</div>'''
+    '''<div style="font:bold 22px Arial,Helvetica,sans-serif;color:#f0b90b;line-height:1.1;">{close}</div>'''
     '''<div style="padding-top:2px;"><span style="font:bold 12px Arial,sans-serif;color:{chg_color};white-space:nowrap;">{arrow} {chg} <span style="font-weight:normal;">({chg_pct}%)</span></span></div>'''
     '''<div style="font:10px Arial,sans-serif;color:#5e6673;padding-top:2px;white-space:nowrap;">open <span style="''' + MONO + '''color:#848e9c;">{open}</span></div></td>''',
 "RANGE_CELL": '''<td width="37%" valign="top" style="padding:8px {pad} 8px 0;''' + LINE + '''">'''
     '''<div style="padding:5px 0 4px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;"><tr>{range_parts}</tr></table></div>'''
     '''<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'''
-    '''<td align="left" style="font:10px 'Courier New',monospace;color:#848e9c;white-space:nowrap;">L {low}</td>'''
-    '''<td align="right" style="font:10px 'Courier New',monospace;color:#848e9c;white-space:nowrap;">H {high}</td></tr></table></td>''',
+    '''<td align="left" style="font:10px Arial,Helvetica,sans-serif;color:#848e9c;white-space:nowrap;">L {low}</td>'''
+    '''<td align="right" style="font:10px Arial,Helvetica,sans-serif;color:#848e9c;white-space:nowrap;">H {high}</td></tr></table></td>''',
 "RANGE_PART": '''<td width="{w}%" height="8" bgcolor="{bg}" style="background:{bg};font-size:0;line-height:0;">&nbsp;</td>''',
 "BN_CELL": '''<td width="37%" valign="top" style="padding:8px {pad} 8px 0;">'''
-    '''<div style="font:bold 16px 'Courier New',monospace;color:#f0b90b;">{close}</div>'''
+    '''<div style="font:bold 16px Arial,Helvetica,sans-serif;color:#f0b90b;">{close}</div>'''
     '''<div style="padding-top:2px;"><span style="font:bold 11px Arial,sans-serif;color:{chg_color};white-space:nowrap;">{arrow} {chg} <span style="font-weight:normal;">({chg_pct}%)</span></span></div></td>''',
 # ---------------------------------------------------------------- THE DAY chart: 3 panels on one 30-min axis
 "CHART": '''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="table-layout:fixed;">'''
-    '''<tr><td colspan="{slots}" style="padding:12px 0 5px;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">PRICE <span style="font-weight:normal;color:#5e6673;">vs open</span> '''
+    '''<tr><td colspan="{slots}" style="padding:14px 0 6px;white-space:nowrap;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">PRICE <span style="font-weight:normal;color:#5e6673;">vs open</span>&nbsp;'''
     '''<span style="''' + MONO + '''color:#eaecef;">{open}</span> &nbsp;<span style="font-weight:normal;color:#0ecb81;">high {high_vs_open}</span> · <span style="font-weight:normal;color:#f6465d;">low {low_vs_open}</span></td></tr>'''
     '''<tr style="font-size:0;line-height:0;">{price_cols}</tr><tr>{mark_cells}</tr><tr>{mark_label_cells}</tr>'''
-    '''<tr><td colspan="{slots}" style="padding:12px 0 5px;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">NEWS <span style="font-weight:normal;color:#5e6673;">· one block = one story</span> &nbsp;'''
-    '''<span style="font-weight:normal;color:#0ecb81;">&uarr; {n_bull} bullish</span> · <span style="font-weight:normal;color:#b7bdc6;">{n_neutral} neutral</span> · <span style="font-weight:normal;color:#f6465d;">&darr; {n_bear} bearish</span></td></tr>'''
+    '''<tr><td colspan="{slots}" style="padding:14px 0 6px;white-space:nowrap;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">NEWS &nbsp;'''
+    '''<span style="font-weight:normal;color:#0ecb81;white-space:nowrap;">&uarr; {n_bull} bullish</span> · <span style="font-weight:normal;color:#b7bdc6;white-space:nowrap;">{n_neutral} neutral</span> · <span style="font-weight:normal;color:#f6465d;white-space:nowrap;">&darr; {n_bear} bearish</span></td></tr>'''
     '''<tr style="font-size:0;line-height:0;">{news_cols}</tr>'''
-    '''<tr><td colspan="{slots}" style="padding:12px 0 5px;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">TRADERS LONG <span style="font-weight:normal;color:#5e6673;">vs start of day</span> &nbsp;'''
+    '''<tr><td colspan="{slots}" style="padding:14px 0 6px;white-space:nowrap;font:bold 10px Arial,sans-serif;color:#848e9c;letter-spacing:.5px;">% LONG <span style="font-weight:normal;color:#5e6673;">vs start</span> &nbsp;'''
     '''<span style="''' + MONO + '''color:#eaecef;">{long_start}% &rarr; {long_end}%</span></td></tr>'''
     '''<tr style="font-size:0;line-height:0;">{crowd_cols}</tr><tr>{axis_cells}</tr></table>'''
-    '''<div style="font:10px Arial,sans-serif;color:#5e6673;padding-top:6px;">Binance CL · hourly · times PKT · <span style="color:#b7bdc6;">▲</span> top story · <span style="color:#b7bdc6;">■</span> day high / low / settle</div>''',
+    '''<div style="font:10px Arial,sans-serif;color:#5e6673;padding-top:6px;">Binance CL · hourly · times PKT · <span style="color:#b7bdc6;">▲</span> top story · <span style="color:#b7bdc6;">■</span> open / high / low / settle · one block = one story</div>''',
 # one column of an up/down panel, as ONE flat table: spacer, bar(s) up, 1px centre line, bar(s) down, spacer.
 # Heights add up to 2*half+1 so every column lines up. font-size/line-height 0 on the table keeps empty cells at their height.
-"COL": '''<td style="padding-right:1px;"><table width="100%" cellpadding="0" cellspacing="0">{rows}</table></td>''',
+"COL": '''<td width="{w}%" style="padding-right:1px;"><table width="100%" cellpadding="0" cellspacing="0">{rows}</table></td>''',
 "SP": '''<tr><td height="{h}">{line}&nbsp;</td></tr>''',
 "FILL": '''<tr><td height="{h}" bgcolor="{color}">{line}&nbsp;</td></tr>''',
-"MARK_CELL": '''<td align="center" style="padding-top:3px;line-height:11px;">{mark}</td>''',
+"MARK_CELL": '''<td align="center" style="padding-top:4px;line-height:11px;">{mark}</td>''',
 "MARK": '''<span style="font:bold 11px Arial,sans-serif;color:{color};">{shape}</span>''',
-"MARK_LABEL_CELL": '''<td align="center" style="font:8px Arial,sans-serif;color:#848e9c;white-space:nowrap;line-height:10px;">{label}</td>''',
+"MARK_LABEL_CELL": '''<td align="center" style="font:9px Arial,sans-serif;color:#848e9c;white-space:nowrap;line-height:10px;">{label}</td>''',
 "AXIS_CELL": '''<td style="font:9px Arial,sans-serif;color:#5e6673;padding-top:4px;white-space:nowrap;">{label}</td>''',
 # ---------------------------------------------------------------- THE DAY timeline rows
 "TL_ROW": '''<tr><td width="64" valign="top" style="padding:{pad} 8px 0 0;"><div style="font:bold 11px Arial,sans-serif;color:#eaecef;white-space:nowrap;">{time}</div>{left_price}</td>'''
     '''<td width="14" valign="top" style="padding-top:{pad};{rail}"><div style="margin-left:-6px;line-height:12px;">{dot}</div></td>'''
     '''<td valign="top" style="padding:{pad} 0 14px 8px;">{content}</td></tr>''',
-"LEFT_PRICE": '''<div style="font:bold 12px 'Courier New',monospace;color:{color};padding-top:2px;">{price}</div>''',
+"LEFT_PRICE": '''<div style="font:bold 12px Arial,Helvetica,sans-serif;color:{color};padding-top:2px;">{price}</div>''',
 "DOT": '''<span style="font:bold 10px Arial,sans-serif;color:{color};">{shape}</span>''',
 "MOMENT_CONTENT": '''<div style="font:bold 11px Arial,sans-serif;color:{color};letter-spacing:.5px;">{name}</div>''',
 "STORY_CONTENT": '''<div style="font:11px/22px Arial,sans-serif;white-space:nowrap;">{sentiment_tag}{impact_tag}</div>'''
@@ -97,7 +97,7 @@ SNIPPETS = {
 "TRADERS_CELL": '''<td width="33%" valign="top" style="padding:6px 6px 6px {pad_left};{divider}">'''
     '''<div style="font:bold 9px Arial,sans-serif;color:#5e6673;letter-spacing:.5px;white-space:nowrap;">{label}</div>'''
     '''<div style="font:bold 11px Arial,sans-serif;color:{color};padding-top:2px;">{read}</div>'''
-    '''<div style="font:10px 'Courier New',monospace;color:#848e9c;white-space:nowrap;">{number}</div></td>''',
+    '''<div style="font:10px Arial,Helvetica,sans-serif;color:#848e9c;white-space:nowrap;">{number}</div></td>''',
 "EOD_CONTENT": '''<div style="font:bold 11px Arial,sans-serif;color:#b7bdc6;letter-spacing:.5px;">BINANCE TRADERS BY END OF DAY</div>'''
     '''<div style="padding-top:6px;"><b style="font:bold 12px Arial,sans-serif;color:#eaecef;">CL</b><div style="font:bold 12px/1.6 Arial,sans-serif;">'''
     '''<span style="color:{crowd_color};white-space:nowrap;">{crowd_read}</span> <span style="color:#5e6673;font-weight:normal;">({long_was}%&rarr;{long_now}% long)</span> · '''
@@ -114,15 +114,19 @@ SNIPPETS = {
 "WORD": '''<b style="color:{color};white-space:nowrap;">{word}</b>''',
 }
 
-PAGE = (R.HEAD.replace("<title>Oil Hourly Brief</title>", "<title>Oil Daily Wrap</title>")
+SHELL = (R.HEAD.replace("<title>Oil Hourly Brief</title>", "<title>Oil Daily Wrap</title>")
+         .replace("background:#05070a", "background:#0b0e11").replace('bgcolor="#05070a"', 'bgcolor="#0b0e11"')
+         .replace('<td align="center" style="padding:16px 8px;">', '<td align="center" style="padding:0;">')
+         .replace("border:1px solid #1e2329;border-radius:8px;overflow:hidden;", ""))
+PAGE = (SHELL
         + "{header}"
-        + '  <tr><td style="padding:20px 20px 6px;">{day_card}</td></tr>\n'
-        + '  <tr><td style="padding:22px 20px 4px;">{the_day_title}</td></tr>\n'
-        + '  <tr><td style="padding:4px 20px 0;">{chart}</td></tr>\n'
-        + '  <tr><td style="padding:12px 20px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">{timeline_rows}</table></td></tr>\n'
-        + '  <tr><td style="padding:22px 20px 4px;">{other_title}</td></tr>\n'
-        + '  <tr><td style="padding:6px 20px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">{other_rows}</table></td></tr>\n'
-        + R.FOOT_TEMPLATE.replace("{sources}", "{footer_sources}"))
+        + '  <tr><td style="padding:16px 16px 6px;">{day_card}</td></tr>\n'
+        + '  <tr><td style="padding:20px 16px 4px;">{the_day_title}</td></tr>\n'
+        + '  <tr><td style="padding:2px 16px 0;">{chart}</td></tr>\n'
+        + '  <tr><td style="padding:14px 16px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">{timeline_rows}</table></td></tr>\n'
+        + '  <tr><td style="padding:20px 16px 4px;">{other_title}</td></tr>\n'
+        + '  <tr><td style="padding:6px 16px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">{other_rows}</table></td></tr>\n'
+        + R.FOOT_TEMPLATE.replace("{sources}", "{footer_sources}").replace("padding:14px 20px;", "padding:14px 16px;"))
 
 
 def S(_snippet, **kw):
@@ -232,10 +236,10 @@ def render(data, hourly, standins=None):
         lo, hi, op, cl = x["low"], x["high"], x["open"], x["close"]
         span = (hi - lo) or 1
         pct = lambda v: max(0.0, min(100.0, (v - lo) / span * 100))
-        o, c = pct(op), pct(cl); col = GREEN if cl >= op else RED; tick = 3.0
+        o, c = pct(op), pct(cl); col = GREEN if cl >= op else RED; tick = 4.0
         a, b = (o, c) if c >= o else (c, o); seg = max(b - a - tick, 0.0)
-        parts = ([(a, "#3c434d"), (seg, col), (tick, "#ffffff"), (100 - a - seg - tick, "#3c434d")] if c >= o else
-                 [(a, "#3c434d"), (tick, "#ffffff"), (seg, col), (100 - a - seg - tick, "#3c434d")])
+        parts = ([(a, "#3c434d"), (seg, col), (tick, YELLOW), (100 - a - seg - tick, "#3c434d")] if c >= o else
+                 [(a, "#3c434d"), (tick, YELLOW), (seg, col), (100 - a - seg - tick, "#3c434d")])
         return "".join(S("RANGE_PART", w=f"{w:.1f}", bg=bg) for w, bg in parts if w > 0.05)
 
     cells = {}
@@ -259,20 +263,38 @@ def render(data, hourly, standins=None):
 
     # ---- chart
     pts = slots_of(cs)
-    devs = [p["c"] - op for p in pts]; big = max(abs(v) for v in devs) or 1
-    def col(up, down, half):
-        """up/down: lists of (height, colour) stacked away from the centre line (nearest the line first)."""
+    devs = [p["c"] - op for p in pts]
+    W = f"{100 / SLOTS:.2f}"
+
+    def col(up, down, half, half_dn=None):
+        """up/down: lists of (height, colour) stacked away from the centre line (nearest the line first).
+        half / half_dn: space above / below the line for this panel (a side with no bars gets none)."""
+        half_dn = half if half_dn is None else half_dn
         u, dn = sum(h for h, _ in up), sum(h for h, _ in down)
         top = ([(half - u, None)] if half - u > 0 else []) + list(reversed(up))
+        bot = list(down) + ([(half_dn - dn, None)] if half_dn - dn > 0 else [])
+        line = 'style="border-bottom:1px solid #5e6673;" ' if top else 'style="border-top:1px solid #5e6673;" '
         cells = [S("FILL", h=h, color=c, line="") if c else S("SP", h=h, line="") for h, c in top]
-        # the 1px centre line is the bottom border of the last cell above the line
-        cells[-1] = cells[-1].replace(' height=', ' style="border-bottom:1px solid #5e6673;" height=', 1)
-        rows = "".join(cells) + "".join(S("FILL", h=h, color=c, line="") if c else S("SP", h=h, line="") for h, c in down)
-        rows += S("SP", h=half - dn, line="") if half - dn > 0 else ""
-        return S("COL", rows=rows)
+        bcells = [S("FILL", h=h, color=c, line="") if c else S("SP", h=h, line="") for h, c in bot]
+        # the 1px centre line: bottom border of the last cell above it (or top border of the first below)
+        if top:
+            cells[-1] = cells[-1].replace(' height=', ' ' + line + 'height=', 1)
+        elif bcells:
+            bcells[0] = bcells[0].replace(' height=', ' ' + line + 'height=', 1)
+        return S("COL", w=W, rows="".join(cells) + "".join(bcells))
+
+    def halves(vals, full):
+        """Pixels above / below the line: the side the bars reach, scaled to the biggest move (0 if never used)."""
+        big = max([abs(v) for v in vals if v is not None] + [1e-9])
+        up = max([v for v in vals if v is not None and v > 0] + [0]) / big * full
+        dn = -min([v for v in vals if v is not None and v < 0] + [0]) / big * full
+        return big, round(up) if up else 0, round(dn) if dn else 0
+    big, pu, pd = halves(devs, PRICE_HALF)
+    pu, pd = (max(pu, 1) if any(v > 0 for v in devs) else 0), (max(pd, 1) if any(v < 0 for v in devs) else 0)
     price_cols = "".join(col([(max(1, round(v / big * PRICE_HALF)), GREEN)] if v > 0 else [],
-                             [(max(1, round(-v / big * PRICE_HALF)), RED)] if v < 0 else [], PRICE_HALF) for v in devs)
+                             [(max(1, round(-v / big * PRICE_HALF)), RED)] if v < 0 else [], pu, pd) for v in devs)
     bounds = [(t(p["t"]), t(pts[i + 1]["t"]) if i + 1 < len(pts) else t(p["t"]) + dt.timedelta(minutes=30)) for i, p in enumerate(pts)]
+    bounds[0] = (min(bounds[0][0], t(cs[0]["t"])), bounds[0][1])
     marks = [(x["at"], "▲", R.SENT[x["sentiment"]][2]) for x in top] + [(w, "■", c) for _, w, _, c in moments]
     mark_cells, label_cells, last = [], [], -99
     for i, (s0, s1) in enumerate(bounds):
@@ -284,9 +306,9 @@ def render(data, hourly, standins=None):
         label_cells.append(S("MARK_LABEL_CELL", label=lab or "&nbsp;"))
     lean = {"Bullish": 1, "Slightly Bullish": 1, "Neutral": 0, "Slightly Bearish": -1, "Bearish": -1}
     slot_stories = [[x for x in stories if s0 <= x["at"] < s1] for s0, s1 in bounds]
-    maxn = max([sum(1 for x in sl if lean[x["sentiment"]] >= 0) for sl in slot_stories]
-               + [sum(1 for x in sl if lean[x["sentiment"]] < 0) for sl in slot_stories] + [1])
-    NH = maxn * (BLOCK + BLOCK_GAP)
+    n_up = max([sum(1 for x in sl if lean[x["sentiment"]] >= 0) for sl in slot_stories] + [0])
+    n_dn = max([sum(1 for x in sl if lean[x["sentiment"]] < 0) for sl in slot_stories] + [0])
+    NH, NH_DN = max(n_up, 1) * (BLOCK + BLOCK_GAP), n_dn * (BLOCK + BLOCK_GAP)
 
     def blocks(items, gap_first):
         """Each story = a 5px block with a 1px gap, matching the original stacks exactly."""
@@ -300,13 +322,15 @@ def render(data, hourly, standins=None):
         up = sorted([x for x in sl if lean[x["sentiment"]] >= 0], key=lambda x: (lean[x["sentiment"]], x["sentiment"] == "Bullish"))
         dn = sorted([x for x in sl if lean[x["sentiment"]] < 0], key=lambda x: x["sentiment"] == "Bearish")
         # up stack is listed nearest-the-line first: original drew top->bottom = reversed(up) with each block followed by its gap
-        news_cols += col(blocks(up, True), blocks(dn, False), NH)
+        news_cols += col(blocks(up, True), blocks(dn, False), NH, NH_DN)
     ls = _hrows(hourly, "CLUSDT", "globalLongShortAccountRatio")
     first, lastv = float(ls[0]["longAccount"]) * 100, float(ls[-1]["longAccount"]) * 100
     cvals = [(lambda r: None if r is None else float(r["longAccount"]) * 100 - first)(_at(ls, s0)) for s0, _ in bounds]
-    bigc = max([abs(v) for v in cvals if v is not None] + [0.1])
-    crowd_cols = "".join(col([(max(1, round(v / bigc * CROWD_HALF)), GREEN)] if (v or 0) > 0.05 else [],
-                             [(max(1, round(-v / bigc * CROWD_HALF)), RED)] if (v or 0) < -0.05 else [], CROWD_HALF) for v in cvals)
+    shown = [v if v is not None and abs(v) > 0.05 else 0 for v in cvals]
+    bigc, cu, cd = halves(shown + [0.1], CROWD_HALF)
+    cu, cd = (max(cu, 1) if any(v > 0 for v in shown) else 0), (max(cd, 1) if any(v < 0 for v in shown) else 0)
+    crowd_cols = "".join(col([(max(1, round(v / bigc * CROWD_HALF)), GREEN)] if v > 0 else [],
+                             [(max(1, round(-v / bigc * CROWD_HALF)), RED)] if v < 0 else [], cu, cd) for v in shown)
     tl = data["sentiment_tally"]
     def merge_empty(cells_list, empty_marker, make_empty):
         out, run = [], 0
@@ -325,7 +349,7 @@ def render(data, hourly, standins=None):
     label_cells = merge_empty(label_cells, e_lab, span(e_lab))
     axis_list = [S("AXIS_CELL", label=pkt(s0, "%I%p").lstrip("0").lower() if i % 6 == 0 else "&nbsp;") for i, (s0, _) in enumerate(bounds)]
     axis_cells = merge_empty(axis_list, e_ax, span(e_ax))
-    chart = S("CHART", slots=len(pts), open=f"{op:.2f}", high_vs_open=sg(b["high"] - op), low_vs_open=sg(b["low"] - op),
+    chart = S("CHART", slots=len(pts), open=f"{op:.2f}", high_vs_open=sg(hi["c"] - op), low_vs_open=sg(lo["c"] - op),
               price_cols=price_cols, mark_cells=mark_cells, mark_label_cells=label_cells,
               n_bull=tl["Bullish"] + tl["Slightly Bullish"], n_neutral=tl["Neutral"], n_bear=tl["Bearish"] + tl["Slightly Bearish"],
               news_cols=news_cols, long_start=f"{first:.1f}", long_end=f"{lastv:.1f}", crowd_cols=crowd_cols, axis_cells=axis_cells)
