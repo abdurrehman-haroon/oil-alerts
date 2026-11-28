@@ -32,7 +32,17 @@ python3 send_email.py /tmp/wrap.html "Oil Daily Wrap · CL <prices.CL.exchange.c
 e.g. subject `Oil Daily Wrap · CL 84.78 +0.83% · 27 Nov`. If the script exits with an error, don't try another way
 to send; report the error.
 
-## 4. Finish
+## 4. Save the day
+
+After a successful send, append the day's numbers (prices, settle, positioning, sentiment, top stories) to the history:
+
+```bash
+python3 state.py save-wrap /tmp/wrap.json
+```
+
+This pushes one commit to `main`; it is the only push allowed. If it fails, mention it in the report.
+
+## 5. Finish
 
 End with a two-line report: CL and Brent day change, how many stories were in the wrap, and any `errors` from
-`/tmp/wrap.json`. Do not commit or push anything.
+`/tmp/wrap.json`. Do not commit or push anything yourself.

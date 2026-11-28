@@ -61,8 +61,14 @@ with a known time.
 Write the result to `/tmp/analysis.json`:
 
 ```json
-{"stories": [ ... ], "extra_events": [ ... ]}
+{"stories": [ ... ], "extra_events": [ ... ], "dropped": [ ... ]}
 ```
+
+`dropped` records why each `news` item you did NOT turn into a story was left out, for later analysis:
+`{"link": "<the item's link>", "reason": "<one of: not_oil, grouped, already_sent, repeat_24h, headline_cap, over_cap, low_value>"}`.
+`grouped` = merged into another story; `repeat_24h` = same event as a `recently_sent` headline; `headline_cap` = over
+the 3 headline-only limit; `over_cap` = over the 15-story limit; `low_value` = relevant but too minor. One entry per
+left-out item; items that became stories are not listed.
 
 Order stories newest first; the renderer sorts by impact. If there are no relevant stories, use an empty list. The
 email still goes out with prices.
